@@ -88,7 +88,7 @@ func (r *renderer) render(ctx context.Context) (*clouddeploy.RenderResult, error
 	}
 	fmt.Printf("Downloaded render input archive from %s\n", inURI)
 
-	out, err := r.renderDeployModelRequest()
+	out, err := r.renderCreatePipelineRequest()
 	if err != nil {
 		return nil, fmt.Errorf("error rendering deploy pipeline params: %v", err)
 	}
@@ -109,7 +109,7 @@ func (r *renderer) render(ctx context.Context) (*clouddeploy.RenderResult, error
 }
 
 // renderDeployModelRequest generates a DeployModelRequest object and returns its definition as a yaml-formatted string
-func (r *renderer) renderDeployModelRequest() ([]byte, error) {
+func (r *renderer) renderCreatePipelineRequest() ([]byte, error) {
 
 	if err := applyDeployParams(r.params.configPath); err != nil {
 		return nil, fmt.Errorf("cannot apply deploy parameters to configuration file: %v", err)

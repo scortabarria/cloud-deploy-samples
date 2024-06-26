@@ -1,0 +1,6 @@
+labels:
+  environment: staging
+serviceAccount:$NUM-preprod@developer.gsa.com
+runtimeConfig:
+  gcsOutputDirectory: gs://$BUCKET_NAME
+  failurePolicy: PIPELINE_FAILURE_POLICY_FAIL_SLOW

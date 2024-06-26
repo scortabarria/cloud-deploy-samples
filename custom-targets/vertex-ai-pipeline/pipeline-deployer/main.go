@@ -51,7 +51,7 @@ func do() error {
 		return fmt.Errorf("unable to parse params: %v", err)
 	}
 
-	aiPlatformRegion, err := regionFromModel(params.model)
+	aiPlatformRegion, err := regionFromPipeline(params.pipeline)
 	if err != nil {
 		return fmt.Errorf("unable to parse region from model resource name: %v", err)
 	}
