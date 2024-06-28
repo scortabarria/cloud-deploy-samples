@@ -28,7 +28,7 @@ customTarget:
   customTargetType: vertex-ai-pipeline
 deployParameters:
   customTarget/vertexAIPipelineJobConfiguration: "staging/pipelineJob.yaml"
-  # customTarget/VertexAIPipeline: "$REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$PKG_ID/$VERSION"
+  customTarget/VertexAIPipeline: "$REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$PKG_ID/$VERSION"
   customTarget/vertexAIPipelineJobParameterValues: "{
     preference_dataset: $PREFERENCE_DATASET,
     prompt_dataset: $PROMPT_DATASET,

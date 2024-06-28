@@ -29,7 +29,7 @@ import (
 
 const (
 	// The default place to look for a deployed model configuration file if a specific location is not specified
-	defaultConfigPath = "/workspace/source/clouddeploy.yaml"
+	defaultConfigPath = "/workspace/source/pipelineJob.yaml"
 	// Path to use when downloading the source input archive file.
 	srcArchivePath = "/workspace/archive.tgz"
 	// Path to use when unarchiving the source input.
@@ -37,8 +37,8 @@ const (
 )
 
 var (
-	pipelineRegex    = regexp.MustCompile("^projects/([^/]+)/locations/([^/]+)/pipelines/([^/]+)$")
-	// endpointRegex = regexp.MustCompile("^projects/([^/]+)/locations/([^/]+)/endpoints/([^/]+)$")
+	pipelineRegex    = regexp.MustCompile("^projects/([^/]+)/locations/([^/]+)/pipelineJobs/([^/]+)$")
+	//parentRegex = regexp.MustCompile("^projects/([^/]+)/locations/([^/]+)")
 )
 
 // renderer implements the handler interface for performing a render.
@@ -126,15 +126,15 @@ func (r *renderer) renderCreatePipelineRequest() ([]byte, error) {
 	if err = yaml.Unmarshal(configuration, pipelineJob); err != nil {
 		return nil, fmt.Errorf("unable to parse configuration data into pipelineJob object: %v", err)
 	}
+	fmt.Errorf("PIPELINEJOB HERE: %v", pipelineJob)
+	// pipeline, err := fetchPipeline(r.aiPlatformService, r.params.pipeline)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("unable to fetch pipeline: %v", err)
+	// }
 
-	pipelineName, err := fetchPipeline(r.aiPlatformService, r.params.pipeline)
-	if err != nil {
-		return nil, fmt.Errorf("unable to fetch pipeline: %v", err)
-	}
-
-	if err := validateRequest(pipelineName, pipelineJob); err != nil {
-		return nil, fmt.Errorf("manifest validation failed: %v", err)
-	}
+	// if err := validateRequest(pipeline, pipelineJob); err != nil {
+	// 	return nil, fmt.Errorf("manifest validation failed: %v", err)
+	// }
 
 	request := &aiplatform.GoogleCloudAiplatformV1CreatePipelineJobRequest{PipelineJob: pipelineJob}
 
@@ -142,14 +142,14 @@ func (r *renderer) renderCreatePipelineRequest() ([]byte, error) {
 }
 
 // validateRequest performs validation on the request.
-func validateRequest(pipelineName, pipelineJob *aiplatform.GoogleCloudAiplatformV1PipelineJob) error {
-	_, err := regionFromPipeline(pipelineName)
-	if err != nil {
-		return fmt.Errorf("unable to parse region from model: %v", err)
-	}
+// func validateRequest(pipelineName string, pipelineJob *aiplatform.GoogleCloudAiplatformV1PipelineJob) error {
+// 	_, err := regionFromPipeline(pipelineName)
+// 	if err != nil {
+// 		return fmt.Errorf("unable to parse region from model: %v", err)
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 // addCommonMetadata inserts metadata into the render result that should be present
 // regardless of render success or failure.

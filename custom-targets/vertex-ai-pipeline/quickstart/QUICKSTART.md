@@ -16,8 +16,16 @@ To simplify the commands in this quickstart, set the following environment varia
 ```shell
 export PROJECT_ID="YOUR_PROJECT_ID"
 export REGION="YOUR_REGION"
+export BUCKET_NAME="YOUR_BUCKET"
+export BUCKET_URI="gs://$BUCKET_NAME"
 ```
 
+```shell
+export PROJECT_ID="scortabarria-internship"
+export REGION="us-central1"
+export BUCKET_NAME="pipeline-artifacts-scorta"
+export BUCKET_URI="gs://$BUCKET_NAME"
+```
 ## 3. Prerequisites
 
 [Install](https://cloud.google.com/sdk/docs/install) the latest version of the Google Cloud CLI
@@ -63,6 +71,10 @@ From within the `quickstart` directory, run this command to build the Vertex AI 
 install the custom target resources:
 
 ```shell
+gsutil mb -l $REGION -p $PROJECT_ID gs://$BUCKET_NAME
+```
+
+```shell
 ../build_and_register.sh -p $PROJECT_ID -r $REGION
 ```
 
@@ -76,7 +88,7 @@ Within the `quickstart` directory, run this second command to make a temporary c
 
 ```shell
 export TMPDIR=$(mktemp -d)
-./replace_variables.sh -p $PROJECT_ID -r $REGION -e $ENDPOINT_ID -t $TMPDIR
+./replace_variables.sh -p $PROJECT_ID -r $REGION -e $ENDPOINT_ID -t $TMPDIR -b $BUCKET_NAME
 ```
 
 The command does the following:
@@ -102,7 +114,7 @@ gcloud deploy releases create release-001 \
     --project=$PROJECT_ID \
     --region=$REGION \
     --source=$TMPDIR/configuration \
-    --deploy-parameters="customTarget/vertexAIPipeline=projects/$PROJECT_ID/locations/$REGION/pipelines/rlhf-tune-pipeline-20240610184812"
+    --deploy-parameters="customTarget/vertexAIPipeline=projects/$PROJECT_ID/locations/$REGION/pipelineJobs/rlhf-tune-pipeline-20240610184812"
 ```
 
 ### Explanation of command line flags

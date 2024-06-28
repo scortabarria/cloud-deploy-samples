@@ -33,7 +33,6 @@ func pipelineRequestFromManifest(path string) (*aiplatform.GoogleCloudAiplatform
 	}
 
 	createPipelineRequest := &aiplatform.GoogleCloudAiplatformV1CreatePipelineJobRequest{}
-
 	if err = yaml.Unmarshal(data, createPipelineRequest); err != nil {
 		return nil, fmt.Errorf("unable to parse createPipelineRequest from manifest file: %v", err)
 	}
@@ -66,19 +65,19 @@ func fetchPipeline(service *aiplatform.Service, pipelineName string) (*aiplatfor
 //NOT SURE IF THIS WORKS!!!!!
 // deployModel performs the DeployModel request and awaits the resulting operation until it completes, it times out or an error occurs.
 func deployPipeline(ctx context.Context, aiPlatformService *aiplatform.Service, parent string, request *aiplatform.GoogleCloudAiplatformV1CreatePipelineJobRequest) error {
-	op, err := aiPlatformService.Projects.Locations.PipelineJobs.Create(parent, request.PipelineJob).Do()
+	_, err := aiPlatformService.Projects.Locations.PipelineJobs.Create(parent, request.PipelineJob).Do()
 
 	if err != nil {
-		return fmt.Errorf("unable to deploy model: %v", err)
+		return fmt.Errorf("unable to deploy pipeline: %v", err)
 	}
-
-	return poll(ctx, aiPlatformService, op)
+return nil
+	//return poll(ctx, aiPlatformService, op)
 }
 
 func regionFromPipeline(pipelineName string) (string, error) {
 	matches := pipelineRegex.FindStringSubmatch(pipelineName)
 	if len(matches) == 0 {
-		return "", fmt.Errorf("unable to parse pipeline name")
+		return "", fmt.Errorf("unable to parse pipeline name, %v", matches)
 	}
 
 	return matches[2], nil

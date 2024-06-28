@@ -2,7 +2,7 @@
 
 export _CT_IMAGE_NAME=vertexai
 
-while getopts "p:r:e:t:" arg; do
+while getopts "p:r:e:t:b:" arg; do
   case "${arg}" in
     p)
       PROJECT="${OPTARG}"
@@ -16,6 +16,9 @@ while getopts "p:r:e:t:" arg; do
     t)
       TMPDIR="${OPTARG}"
       ;;
+    b)
+      BUCKET_NAME="${OPTARG}"
+      ;;
     *)
       usage
       exit 1
@@ -23,7 +26,7 @@ while getopts "p:r:e:t:" arg; do
   esac
 done
 
-if [[ ! -v PROJECT || ! -v REGION || ! -v ENDPOINT || ! -v TMPDIR ]]; then
+if [[ ! -v PROJECT || ! -v REGION || ! -v ENDPOINT || ! -v TMPDIR || ! -v BUCKET_NAME ]]; then
   usage
   exit 1
 fi
@@ -48,5 +51,9 @@ sed -i "s/\$REGION/${REGION}/g" "$TMPDIR"/configuration/skaffold.yaml
 sed -i "s/\$PROJECT_ID/${PROJECT}/g" "$TMPDIR"/configuration/skaffold.yaml
 sed -i "s/\$_CT_IMAGE_NAME/${_CT_IMAGE_NAME}/g" "$TMPDIR"/configuration/skaffold.yaml
 sed -i "s/\$IMAGE_SHA/${IMAGE_SHA}/g" "$TMPDIR"/configuration/skaffold.yaml
+
+# replace variables in configuration/staging/pipelineJob.yaml
+sed -i "s/\$BUCKET_NAME/${BUCKET_NAME}/g" "$TMPDIR"/configuration/staging/pipelineJob.yaml
+
 
 

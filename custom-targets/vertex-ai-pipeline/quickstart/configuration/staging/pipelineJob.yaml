@@ -1,6 +1,7 @@
 labels:
   environment: staging
-serviceAccount:$NUM-preprod@developer.gsa.com
+serviceAccount: 616537680697-compute@developer.gserviceaccount.com
 runtimeConfig:
   gcsOutputDirectory: gs://$BUCKET_NAME
   failurePolicy: PIPELINE_FAILURE_POLICY_FAIL_SLOW
+templateUri: "us-central1-docker.pkg.dev/scortabarria-internship/...."
