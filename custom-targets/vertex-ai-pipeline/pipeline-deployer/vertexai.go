@@ -24,7 +24,7 @@ import (
 	// "strings"
 )
 
-// deployModelFromManifest loads the file provided in `path` and returns the parsed DeployModelRequest
+// pipelineRequestFromManifest loads the file provided in `path` and returns the parsed CreatePipelineJobRequest
 // from the data.
 func pipelineRequestFromManifest(path string) (*aiplatform.GoogleCloudAiplatformV1CreatePipelineJobRequest, error) {
 	data, err := os.ReadFile(path)
@@ -34,7 +34,7 @@ func pipelineRequestFromManifest(path string) (*aiplatform.GoogleCloudAiplatform
 
 	createPipelineRequest := &aiplatform.GoogleCloudAiplatformV1CreatePipelineJobRequest{}
 	if err = yaml.Unmarshal(data, createPipelineRequest); err != nil {
-		return nil, fmt.Errorf("unable to parse createPipelineRequest from manifest file: %v", err)
+		return nil, fmt.Errorf("unable to parse createPipelineJobRequest from manifest file: %v", err)
 	}
 
 	return createPipelineRequest, nil
@@ -53,33 +53,16 @@ func newAIPlatformService(ctx context.Context, region string) (*aiplatform.Servi
 	return regionalService, nil
 }
 
-// fetchModel calls the aiplatform API to fetch the Vertex AI model using the given model name.
-func fetchPipeline(service *aiplatform.Service, pipelineName string) (*aiplatform.GoogleCloudAiplatformV1PipelineJob, error) {
-	pipeline, err := service.Projects.Locations.PipelineJobs.Get(pipelineName).Do()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get pipeline job: %v", err)
-	}
-	return pipeline, nil
-}
 
-//NOT SURE IF THIS WORKS!!!!!
-// deployModel performs the DeployModel request and awaits the resulting operation until it completes, it times out or an error occurs.
+
+// deployPipeline performs the deployPipeline request and awaits the resulting operation until it completes, it times out or an error occurs.
 func deployPipeline(ctx context.Context, aiPlatformService *aiplatform.Service, parent string, request *aiplatform.GoogleCloudAiplatformV1CreatePipelineJobRequest) error {
 	_, err := aiPlatformService.Projects.Locations.PipelineJobs.Create(parent, request.PipelineJob).Do()
 
 	if err != nil {
 		return fmt.Errorf("unable to deploy pipeline: %v", err)
 	}
-return nil
-	//return poll(ctx, aiPlatformService, op)
+	return nil
 }
 
-func regionFromPipeline(pipelineName string) (string, error) {
-	matches := pipelineRegex.FindStringSubmatch(pipelineName)
-	if len(matches) == 0 {
-		return "", fmt.Errorf("unable to parse pipeline name, %v", matches)
-	}
-
-	return matches[2], nil
-}
 

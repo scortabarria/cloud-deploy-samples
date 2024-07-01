@@ -7,7 +7,7 @@ This quickstart demonstrates how to deploy a ML Pipeline to an target environmen
 
 ## 1. Clone Repository
 
-Clone this repository and navigate to the quickstart directory (`cloud-deploy-samples/custom-targets/vertex-ai/quickstart`) since the commands provided expect to be executed from that directory.
+Clone this repository and navigate to the quickstart directory (`cloud-deploy-samples/custom-targets/vertex-ai-pipeline/quickstart`) since the commands provided expect to be executed from that directory.
 
 ## 2. Environment variables
 
@@ -65,14 +65,17 @@ The default service account, `{project_num}-compute@developer.gserviceaccount.co
        --role="roles/aiplatform.user"
    ```
 
-4. Build and Register a Custom Target Type for Vertex AI
-
-From within the `quickstart` directory, run this command to build the Vertex AI model deployer image and
-install the custom target resources:
+4. Create a bucket
 
 ```shell
 gsutil mb -l $REGION -p $PROJECT_ID gs://$BUCKET_NAME
 ```
+
+
+5. Build and Register a Custom Target Type for Vertex AI
+
+From within the `quickstart` directory, run this command to build the Vertex AI model deployer image and
+install the custom target resources:
 
 ```shell
 ../build_and_register.sh -p $PROJECT_ID -r $REGION
@@ -114,7 +117,7 @@ gcloud deploy releases create release-001 \
     --project=$PROJECT_ID \
     --region=$REGION \
     --source=$TMPDIR/configuration \
-    --deploy-parameters="customTarget/vertexAIPipeline=projects/$PROJECT_ID/locations/$REGION/pipelineJobs/rlhf-tune-pipeline-20240610184812"
+    --deploy-parameters="customTarget/vertexAIPipeline=https://us-central1-kfp.pkg.dev/scortabarria-internship/scortabarria-internship-rlhf-pipelines/rlhf-tune-pipeline/sha256:e739c5c310d406f8a6a9133b0c97bf9a249715da0a507505997ced042e3e0f17"
 ```
 
 ### Explanation of command line flags
