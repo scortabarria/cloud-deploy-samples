@@ -29,11 +29,5 @@ customTarget:
 deployParameters:
   customTarget/vertexAIPipelineJobConfiguration: "staging/pipelineJob.yaml"
   customTarget/VertexAIPipeline: "$REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$PKG_ID/$VERSION"
-  customTarget/vertexAIPipelineJobParameterValues: "{
-    preference_dataset: $PREFERENCE_DATASET,
-    prompt_dataset: $PROMPT_DATASET,
-    large_model_reference: $LARGE_MODEL_REFERENCE,
-    model_display_name: $MODEL_DISPLAY_NAME
-  }"
   customTarget/projectID: "$PROJECT_ID"
   customTarget/location: "$REGION"

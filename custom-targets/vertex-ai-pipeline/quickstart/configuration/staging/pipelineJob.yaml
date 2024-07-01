@@ -5,9 +5,8 @@ runtimeConfig:
   gcsOutputDirectory: gs://$BUCKET_NAME
   failurePolicy: PIPELINE_FAILURE_POLICY_FAIL_SLOW
   parameterValues:
-    project_id: scortabarria-internship
-    large_model_reference: text-bison@001
-    preference_dataset: gs://scortabarria-internship-rlhf-artifacts/data/preference/*.jsonl
-    prompt_dataset: gs://scortabarria-internship-rlhf-artifacts/data/prompt/*.jsonl
-templateUri: https://us-central1-kfp.pkg.dev/scortabarria-internship/scortabarria-internship-rlhf-pipelines/rlhf-tune-pipeline/sha256:e739c5c310d406f8a6a9133b0c97bf9a249715da0a507505997ced042e3e0f17
-displayName: test-pipeline
+    project_id: $PROJECT_ID
+    large_model_reference: $LARGE_MODEL_REFERENCE
+    preference_dataset: $PREFERENCE_DATASET
+    prompt_dataset: $PROMPT_DATASET
+displayName: $DISPLAY_NAME

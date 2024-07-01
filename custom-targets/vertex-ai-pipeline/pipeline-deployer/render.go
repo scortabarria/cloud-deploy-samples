@@ -121,11 +121,12 @@ func (r *renderer) renderCreatePipelineRequest() ([]byte, error) {
 		return nil, fmt.Errorf("unable to parse configuration data into pipelineJob object: %v", err)
 	}
 
+	pipelineJob.TemplateUri = r.params.pipeline
+
 	request := &aiplatform.GoogleCloudAiplatformV1CreatePipelineJobRequest{PipelineJob: pipelineJob}
 
 	return yaml.Marshal(request)
 }
-
 
 
 // addCommonMetadata inserts metadata into the render result that should be present

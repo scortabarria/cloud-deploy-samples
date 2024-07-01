@@ -30,7 +30,7 @@ const (
 	pipelineEnvKey = "CLOUD_DEPLOY_customTarget_vertexAIPipeline"
 	// parentEnvKey          = "CLOUD_DEPLOY_customTarget_vertexAIParent"
 	configPathKey  = "CLOUD_DEPLOY_customTarget_vertexAIPipelineJobConfiguration" //?????
-	paramValsKey   = "CLOUD_DEPLOY_customTarget_vertexAIPipelineJobParameterValues"
+	// paramValsKey   = "CLOUD_DEPLOY_customTarget_vertexAIPipelineJobParameterValues"
 	locValsKey     = "CLOUD_DEPLOY_customTarget_location"
 	projectValsKey = "CLOUD_DEPLOY_customTarget_projectID"
 )
@@ -78,8 +78,6 @@ type params struct {
 
 	pipeline string
 
-	modelParams string
-
 	configPath string
 
 	location string
@@ -119,7 +117,7 @@ func determineParams() (*params, error) {
 		return nil, fmt.Errorf("environment variable %s contains empty string", pipelineEnvKey)
 	}
 
-	modelParams, found := os.LookupEnv(paramValsKey)
+	// pipelineParams, found := os.LookupEnv(paramValsKey)
 	if !found {
 		fmt.Printf("Required environment variable %s not found. \n", paramValsKey)
 		return nil, fmt.Errorf("required environment variable %s not found", paramValsKey)
@@ -132,7 +130,6 @@ func determineParams() (*params, error) {
 	return &params{
 		parent:      parent,
 		pipeline:    pipeline,
-		modelParams: modelParams,
 		configPath:  os.Getenv(configPathKey),
 		location:    location,
 		

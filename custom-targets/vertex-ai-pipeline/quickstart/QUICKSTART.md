@@ -18,6 +18,13 @@ export PROJECT_ID="YOUR_PROJECT_ID"
 export REGION="YOUR_REGION"
 export BUCKET_NAME="YOUR_BUCKET"
 export BUCKET_URI="gs://$BUCKET_NAME"
+export REPO_ID="YOUR_REPO"
+export PACKAGE_ID="YOUR_PACKAGE"
+export TAG_OR_VERSION="YOUR_TAG_OR_VERSION"
+export PREFERENCE_DATASET="YOUR_PREFERENCE_DATASET"
+export PROMPT_DATASET="YOUR_PROMPT_DATASET"
+export LARGE_MODEL_REFERENCE="YOUR_LARGE_MODEL_REFERENCE"
+export MODEL_DISPLAY_NAME="YOUR_DISPLAY_NAME"
 ```
 
 ```shell
@@ -25,6 +32,14 @@ export PROJECT_ID="scortabarria-internship"
 export REGION="us-central1"
 export BUCKET_NAME="pipeline-artifacts-scorta"
 export BUCKET_URI="gs://$BUCKET_NAME"
+export REPO_ID="scortabarria-internship-rlhf-pipelines"
+export PACKAGE_ID="rlhf-tune-pipeline"
+export TAG_OR_VERSION="sha256:e739c5c310d406f8a6a9133b0c97bf9a249715da0a507505997ced042e3e0f17"
+export PREFERENCE_DATASET="gs://scortabarria-internship-rlhf-artifacts/data/preference/*.jsonl"
+export PROMPT_DATASET="gs://scortabarria-internship-rlhf-artifacts/data/prompt/*.jsonl"
+export LARGE_MODEL_REFERENCE="text-bison@001"
+export MODEL_DISPLAY_NAME="$REGION/$PROJECT_ID"
+
 ```
 ## 3. Prerequisites
 
@@ -91,7 +106,7 @@ Within the `quickstart` directory, run this second command to make a temporary c
 
 ```shell
 export TMPDIR=$(mktemp -d)
-./replace_variables.sh -p $PROJECT_ID -r $REGION -e $ENDPOINT_ID -t $TMPDIR -b $BUCKET_NAME
+./replace_variables.sh -p $PROJECT_ID -r $REGION -t $TMPDIR -b $BUCKET_NAME -f $PREFERENCE_DATASET -m $PROMPT_DATASET -l $LARGE_MODEL_REFERENCE -d $MODEL_DISPLAY_NAME
 ```
 
 The command does the following:
@@ -117,7 +132,7 @@ gcloud deploy releases create release-001 \
     --project=$PROJECT_ID \
     --region=$REGION \
     --source=$TMPDIR/configuration \
-    --deploy-parameters="customTarget/vertexAIPipeline=https://us-central1-kfp.pkg.dev/scortabarria-internship/scortabarria-internship-rlhf-pipelines/rlhf-tune-pipeline/sha256:e739c5c310d406f8a6a9133b0c97bf9a249715da0a507505997ced042e3e0f17"
+    --deploy-parameters="customTarget/vertexAIPipeline=https://$REGION-kfp.pkg.dev/$PROJECT_ID/$REPO_ID/$PACKAGE_ID/$TAG_OR_VERSION"
 ```
 
 ### Explanation of command line flags

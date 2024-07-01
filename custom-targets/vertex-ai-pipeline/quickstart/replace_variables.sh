@@ -2,7 +2,7 @@
 
 export _CT_IMAGE_NAME=vertexai
 
-while getopts "p:r:e:t:b:" arg; do
+while getopts "p:r:t:b:f:m:l:d:" arg; do
   case "${arg}" in
     p)
       PROJECT="${OPTARG}"
@@ -10,14 +10,23 @@ while getopts "p:r:e:t:b:" arg; do
     r)
       REGION="${OPTARG}"
       ;;
-    e)
-      ENDPOINT="${OPTARG}"
-      ;;
     t)
       TMPDIR="${OPTARG}"
       ;;
     b)
-      BUCKET_NAME="${OPTARG}"
+      BUCKET="${OPTARG}"
+      ;;
+    f)
+      PREFERENCE="${OPTARG}"
+      ;;
+    m)
+      PROMPT="${OPTARG}"
+      ;;
+    l)
+      MODEL_REFERENCE="${OPTARG}"
+      ;;
+    d)
+      DISPLAY="${OPTARG}"
       ;;
     *)
       usage
@@ -26,7 +35,7 @@ while getopts "p:r:e:t:b:" arg; do
   esac
 done
 
-if [[ ! -v PROJECT || ! -v REGION || ! -v ENDPOINT || ! -v TMPDIR || ! -v BUCKET_NAME ]]; then
+if [[ ! -v PROJECT || ! -v REGION || ! -v TMPDIR || ! -v BUCKET || ! -v PREFERENCE || ! -v PROMPT || ! -v MODEL_REFERENCE|| ! -v DISPLAY ]]; then
   usage
   exit 1
 fi
@@ -44,7 +53,7 @@ cp -r configuration "$TMPDIR"/configuration
 # replace variables in clouddeploy.yaml with actual values
 sed -i "s/\$PROJECT_ID/${PROJECT}/g" "$TMPDIR"/clouddeploy.yaml
 sed -i "s/\$REGION/${REGION}/g" "$TMPDIR"/clouddeploy.yaml
-# sed -i "s/\$ENDPOINT_ID/${ENDPOINT}/g" "$TMPDIR"/clouddeploy.yaml 
+
 
 # replace variables in configuration/skaffold.yaml with actual values
 sed -i "s/\$REGION/${REGION}/g" "$TMPDIR"/configuration/skaffold.yaml
@@ -53,7 +62,12 @@ sed -i "s/\$_CT_IMAGE_NAME/${_CT_IMAGE_NAME}/g" "$TMPDIR"/configuration/skaffold
 sed -i "s/\$IMAGE_SHA/${IMAGE_SHA}/g" "$TMPDIR"/configuration/skaffold.yaml
 
 # replace variables in configuration/staging/pipelineJob.yaml
-sed -i "s/\$BUCKET_NAME/${BUCKET_NAME}/g" "$TMPDIR"/configuration/staging/pipelineJob.yaml
+sed -i "s/\$BUCKET_NAME/${BUCKET}/g" "$TMPDIR"/configuration/staging/pipelineJob.yaml
+sed -i "s/\$PROJECT_ID/${PROJECT}/g" "$TMPDIR"/configuration/staging/pipelineJob.yaml
+sed -i "s|\$PREFERENCE_DATASET|${PREFERENCE}|g" "$TMPDIR"/configuration/staging/pipelineJob.yaml
+sed -i "s|\$PROMPT_DATASET|${PROMPT}|g" "$TMPDIR"/configuration/staging/pipelineJob.yaml
+sed -i "s/\$LARGE_MODEL_REFERENCE/${MODEL_REFERENCE}/g" "$TMPDIR"/configuration/staging/pipelineJob.yaml
+sed -i "s|\$DISPLAY_NAME|${DISPLAY}|g" "$TMPDIR"/configuration/staging/pipelineJob.yaml
 
 
 
