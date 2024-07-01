@@ -139,29 +139,27 @@ is specified by `--project` and `--region` respectively.
 To check release details, run this command:
 
 ```shell
-gcloud deploy releases describe release-001 --delivery-pipeline=vertex-ai-cloud-deploy-pipeline --project=$PROJECT_ID --region=$REGION
+gcloud deploy releases describe release-001 --delivery-pipeline=pipeline-cd --project=$PROJECT_ID --region=$REGION
 ```
 
 Run this command to filter only the render status of the release:
 
 ```shell
-gcloud deploy releases describe release-001 --delivery-pipeline=vertex-ai-cloud-deploy-pipeline --project=$PROJECT_ID --region=$REGION --format "(renderState)"
+gcloud deploy releases describe release-001 --delivery-pipeline=pipeline-cd --project=$PROJECT_ID --region=$REGION --format "(renderState)"
 ```
 
 ## 8. Monitor rollout status
 
 In the [Cloud Deploy UI](https://cloud.google.com/deploy) for your project click on the
-`vertex-ai-cloud-deploy-pipeline` delivery pipeline. Here you can see the release created and the rollout to the target for the release.
+`pipeline-cd` delivery pipeline. Here you can see the release created and the rollout to the target for the release.
 
 You can also describe the rollout created using the following command:
 
 ```shell
-gcloud deploy rollouts describe release-001-to-prod-endpoint-0001 --release=release-001 --delivery-pipeline=vertex-ai-cloud-deploy-pipeline --project=$PROJECT_ID --region=$REGION
+gcloud deploy rollouts describe release-001-to-staging-environment-0001 --release=release-001 --delivery-pipeline=pipeline-cd --project=$PROJECT_ID --region=$REGION
 ```
 
-It will take up to 15 minutes for the model to fully deploy.
-
-After the rollout completes, you can inspect the deployed models and traffic splits of the endpoint with `gcloud`
+After the rollout completes, you can inspect the deployed pipeline with `gcloud`
 
 ```shell
 gcloud ai endpoints describe $ENDPOINT_ID --region $REGION --project $PROJECT_ID
@@ -170,7 +168,7 @@ gcloud ai endpoints describe $ENDPOINT_ID --region $REGION --project $PROJECT_ID
 
 Monitor the post-deploy operation by querying the rollout:
 
-```
+```shell
 gcloud deploy rollouts describe release-001-to-prod-endpoint-0001 --release=release-001 --delivery-pipeline=vertex-ai-cloud-deploy-pipeline --project=$PROJECT_ID --region=$REGION --format "(phases[0].deploymentJobs.postdeployJob)"
 ```
 
