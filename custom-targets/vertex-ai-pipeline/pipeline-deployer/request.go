@@ -78,35 +78,32 @@ type params struct {
 
 	pipeline string
 
-	// The endpoint where the model will be deployed
-	// format is "projects/{project}/locations/{location}/endpoints/{endpointId}.
 	modelParams string
 
-	// directory path where the renderer should look for target-specific configuration
-	// for this deployment, if not provided the renderer will check for a deployModel.yaml
-	// fie in the root working directory.
 	configPath string
+
+	location string
 }
 
 // determineParams returns the supported params provided in the execution environment via environment variables.
 func determineParams() (*params, error) {
 	location, found := os.LookupEnv(locValsKey)
 	if !found {
-		fmt.Printf("Required environment variable %s not found. This variable is derived from deploy parameter: %s, please verify that a valid Vertex AI model resource name was provided through this deploy parameter.\n", pipelineEnvKey, pipelineDPKey)
-		return nil, fmt.Errorf("required environment variable %s not found", locValsKey)
+		fmt.Printf("Required environment variable %s not found. Please verify that a valid Vertex AI pipeline resource name was provided through this deploy parameter.\n", locValsKey)
+		return nil, fmt.Errorf("environment variable %s not found", locValsKey)
 	}
 	if location == "" {
-		fmt.Printf("environment variable %s is empty. This variable is derived from deploy parameter: %s, please verify that a valid Vertex AI model resource name was provided through this deploy parameter.\n", pipelineEnvKey, pipelineDPKey)
+		fmt.Printf("Environment variable %s is empty. Please verify that a valid Vertex AI pipeline resource name was provided through this deploy parameter.\n", locValsKey)
 		return nil, fmt.Errorf("environment variable %s contains empty string", locValsKey)
 	}
 
 	project, found := os.LookupEnv(projectValsKey)
 	if !found {
-		fmt.Printf("Required environment variable %s not found. This variable is derived from deploy parameter: %s, please verify that a valid Vertex AI model resource name was provided through this deploy parameter.\n", pipelineEnvKey, pipelineDPKey)
+		fmt.Printf("Required environment variable %s not found. Please verify that a valid Vertex AI pipeline resource name was provided through this deploy parameter.\n", projectValsKey)
 		return nil, fmt.Errorf("required environment variable %s not found", projectValsKey)
 	}
 	if project == "" {
-		fmt.Printf("environment variable %s is empty. This variable is derived from deploy parameter: %s, please verify that a valid Vertex AI model resource name was provided through this deploy parameter.\n", pipelineEnvKey, pipelineDPKey)
+		fmt.Printf("Environment variable %s is empty. lease verify that a valid Vertex AI pipeline resource name was provided through this deploy parameter.\n", projectValsKey)
 		return nil, fmt.Errorf("environment variable %s contains empty string", projectValsKey)
 	}
 
@@ -114,22 +111,22 @@ func determineParams() (*params, error) {
 
 	pipeline, found := os.LookupEnv(pipelineEnvKey)
 	if !found {
-		fmt.Printf("Required environment variable %s not found. This variable is derived from deploy parameter: %s, please verify that a valid Vertex AI model resource name was provided through this deploy parameter.\n", pipelineEnvKey, pipelineDPKey)
+		fmt.Printf("Required environment variable %s not found. Please verify that a valid Vertex AI pipeline resource name was provided through this deploy parameter.\n", pipelineEnvKey)
 		return nil, fmt.Errorf("required environment variable %s not found", pipelineEnvKey)
 	}
 	if pipeline == "" {
-		fmt.Printf("environment variable %s is empty. This variable is derived from deploy parameter: %s, please verify that a valid Vertex AI model resource name was provided through this deploy parameter.\n", pipelineEnvKey, pipelineDPKey)
+		fmt.Printf("environment variable %s is empty. Please verify that a valid Vertex AI pipeline resource name was provided through this deploy parameter.\n", pipelineEnvKey)
 		return nil, fmt.Errorf("environment variable %s contains empty string", pipelineEnvKey)
 	}
 
 	modelParams, found := os.LookupEnv(paramValsKey)
 	if !found {
 		fmt.Printf("Required environment variable %s not found. \n", paramValsKey)
-		return nil, fmt.Errorf("required environment variable %s not found", pipelineEnvKey)
+		return nil, fmt.Errorf("required environment variable %s not found", paramValsKey)
 	}
 	if len(paramValsKey) == 0 {
-		fmt.Printf("environment variable %s is empty.\n", pipelineEnvKey)
-		return nil, fmt.Errorf("environment variable %s contains empty string", pipelineEnvKey)
+		fmt.Printf("environment variable %s is empty.\n", paramValsKey)
+		return nil, fmt.Errorf("environment variable %s contains empty string", paramValsKey)
 	}
 
 	return &params{
@@ -137,5 +134,7 @@ func determineParams() (*params, error) {
 		pipeline:    pipeline,
 		modelParams: modelParams,
 		configPath:  os.Getenv(configPathKey),
+		location:    location,
+		
 	}, nil
 }

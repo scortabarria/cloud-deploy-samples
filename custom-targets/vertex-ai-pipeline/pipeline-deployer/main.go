@@ -51,12 +51,7 @@ func do() error {
 		return fmt.Errorf("unable to parse params: %v", err)
 	}
 
-	aiPlatformRegion, err := regionFromPipeline(params.pipeline)
-	if err != nil {
-		return fmt.Errorf("unable to parse region from model resource name: %v", err)
-	}
-
-	aiPlatformService, err := newAIPlatformService(ctx, aiPlatformRegion)
+	aiPlatformService, err := newAIPlatformService(ctx, params.location)
 	if err != nil {
 		return fmt.Errorf("unable to create aiplatform.Service object : %v", err)
 	}

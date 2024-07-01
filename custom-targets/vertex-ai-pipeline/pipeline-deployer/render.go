@@ -19,16 +19,14 @@ import (
 	"fmt"
 	"github.com/GoogleCloudPlatform/cloud-deploy-samples/custom-targets/util/applysetters"
 	"github.com/GoogleCloudPlatform/cloud-deploy-samples/custom-targets/util/clouddeploy"
-
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/aiplatform/v1"
 	"os"
-	"regexp"
 	"sigs.k8s.io/yaml"
 )
 
 const (
-	// The default place to look for a deployed model configuration file if a specific location is not specified
+	// The default place to look for a pipelineJob configuration file if a specific location is not specified
 	defaultConfigPath = "/workspace/source/pipelineJob.yaml"
 	// Path to use when downloading the source input archive file.
 	srcArchivePath = "/workspace/archive.tgz"
@@ -36,10 +34,6 @@ const (
 	srcPath = "/workspace/source"
 )
 
-var (
-	pipelineRegex    = regexp.MustCompile("^projects/([^/]+)/locations/([^/]+)/pipelineJobs/([^/]+)$")
-	//parentRegex = regexp.MustCompile("^projects/([^/]+)/locations/([^/]+)")
-)
 
 // renderer implements the handler interface for performing a render.
 type renderer struct {
@@ -50,7 +44,7 @@ type renderer struct {
 }
 
 // process processes the Render params by generating the YAML representation of a
-// DeployModelRequest object.
+// CreatePipelineJobRequest object.
 func (r *renderer) process(ctx context.Context) error {
 	fmt.Println("Processing render request")
 	res, err := r.render(ctx)
@@ -90,17 +84,17 @@ func (r *renderer) render(ctx context.Context) (*clouddeploy.RenderResult, error
 
 	out, err := r.renderCreatePipelineRequest()
 	if err != nil {
-		return nil, fmt.Errorf("error rendering deploy pipeline params: %v", err)
+		return nil, fmt.Errorf("error rendering createPipelineJobRequest params: %v", err)
 	}
 
-	fmt.Printf("Uploading deployed model manifest.\n")
+	fmt.Printf("Uploading deployed pipeline manifest.\n")
 
 	mURI, err := r.req.UploadArtifact(ctx, r.gcsClient, "manifest.yaml", &clouddeploy.GCSUploadContent{Data: out})
 	if err != nil {
-		return nil, fmt.Errorf("error uploading deployed model manifest: %v", err)
+		return nil, fmt.Errorf("error uploading createPipelineJobRequest manifest: %v", err)
 	}
 
-	fmt.Printf("Uploaded deployed model manifest to %s\n", mURI)
+	fmt.Printf("Uploaded createPipelineJobRequest manifest to %s\n", mURI)
 
 	return &clouddeploy.RenderResult{
 		ResultStatus: clouddeploy.RenderSucceeded,
@@ -108,7 +102,7 @@ func (r *renderer) render(ctx context.Context) (*clouddeploy.RenderResult, error
 	}, nil
 }
 
-// renderDeployModelRequest generates a DeployModelRequest object and returns its definition as a yaml-formatted string
+// renderCreatePipelineRequest generates a CreatePipelineJobRequest object and returns its definition as a yaml-formatted string
 func (r *renderer) renderCreatePipelineRequest() ([]byte, error) {
 
 	if err := applyDeployParams(r.params.configPath); err != nil {
@@ -120,36 +114,19 @@ func (r *renderer) renderCreatePipelineRequest() ([]byte, error) {
 		return nil, fmt.Errorf("unable to obtain configuration data: %v", err)
 	}
 
-	// blank deployed model template
+	// blank pipelineJob template
 	pipelineJob := &aiplatform.GoogleCloudAiplatformV1PipelineJob{}
 
 	if err = yaml.Unmarshal(configuration, pipelineJob); err != nil {
 		return nil, fmt.Errorf("unable to parse configuration data into pipelineJob object: %v", err)
 	}
-	fmt.Errorf("PIPELINEJOB HERE: %v", pipelineJob)
-	// pipeline, err := fetchPipeline(r.aiPlatformService, r.params.pipeline)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("unable to fetch pipeline: %v", err)
-	// }
-
-	// if err := validateRequest(pipeline, pipelineJob); err != nil {
-	// 	return nil, fmt.Errorf("manifest validation failed: %v", err)
-	// }
 
 	request := &aiplatform.GoogleCloudAiplatformV1CreatePipelineJobRequest{PipelineJob: pipelineJob}
 
 	return yaml.Marshal(request)
 }
 
-// validateRequest performs validation on the request.
-// func validateRequest(pipelineName string, pipelineJob *aiplatform.GoogleCloudAiplatformV1PipelineJob) error {
-// 	_, err := regionFromPipeline(pipelineName)
-// 	if err != nil {
-// 		return fmt.Errorf("unable to parse region from model: %v", err)
-// 	}
 
-// 	return nil
-// }
 
 // addCommonMetadata inserts metadata into the render result that should be present
 // regardless of render success or failure.
@@ -161,7 +138,7 @@ func (r *renderer) addCommonMetadata(rs *clouddeploy.RenderResult) {
 	rs.Metadata[clouddeploy.CustomTargetSourceSHAMetadataKey] = clouddeploy.GitCommit
 }
 
-// applyDeployParams replaces templated parameters in the DeployedModel manifest with
+// applyDeployParams replaces templated parameters in the pipelineJob manifest with
 // the actual values derived from deploy parameters.
 func applyDeployParams(configPath string) error {
 	fullPath, _ := determineConfigFileLocation(configPath)
@@ -169,7 +146,7 @@ func applyDeployParams(configPath string) error {
 	return applysetters.ApplyParams(fullPath, deployParams)
 }
 
-// determineConfigFileLocation determines where to look for the `deployedModel`
+// determineConfigFileLocation determines where to look for the `pipelineJob.yaml`
 // configuration file. Since this file is optional, we shouldn't necessarily err
 // if the file is missing. However, if the configRelativePath is provided it means
 // that the user specified this value as a deploy-parameter and we should check

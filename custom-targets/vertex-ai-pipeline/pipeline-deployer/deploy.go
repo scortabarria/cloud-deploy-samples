@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// deploy.go contains logic to deploy a model to a vertex AI endpoint.
+// deploy.go contains logic to deploy a pipeline to vertex AI.
 package main
 
 import (
@@ -21,7 +21,6 @@ import (
 	"github.com/GoogleCloudPlatform/cloud-deploy-samples/custom-targets/util/clouddeploy"
 	"google.golang.org/api/aiplatform/v1"
 	"sigs.k8s.io/yaml"
-
 	"cloud.google.com/go/storage"
 )
 
@@ -29,7 +28,7 @@ const aiDeployerSampleName = "clouddeploy-vertex-ai-sample"
 
 const localManifest = "manifest.yaml"
 
-// deployer implements the handler interface to deploy a model using the vertex AI API.
+// deployer implements the handler interface to deploy a pipeline using the vertex AI API.
 type deployer struct {
 	gcsClient         *storage.Client
 	aiPlatformService *aiplatform.Service
@@ -37,7 +36,7 @@ type deployer struct {
 	req               *clouddeploy.DeployRequest
 }
 
-// process processes the Deploy request, and performs the vertex AI model deployment.
+// process processes the Deploy request, and performs the vertex AI pipeline deployment.
 func (d *deployer) process(ctx context.Context) error {
 	fmt.Println("Processing deploy request")
 
@@ -69,7 +68,7 @@ func (d *deployer) process(ctx context.Context) error {
 
 }
 
-// deploy performs the Vertex AI model deployment
+// deploy performs the Vertex AI pipeline deployment
 func (d *deployer) deploy(ctx context.Context) (*clouddeploy.DeployResult, error) {
 
 	if err := d.downloadManifest(ctx); err != nil {
@@ -117,13 +116,13 @@ func (d *deployer) addCommonMetadata(rs *clouddeploy.DeployResult) {
 	rs.Metadata[clouddeploy.CustomTargetSourceSHAMetadataKey] = clouddeploy.GitCommit
 }
 
-// applyModel deploys the DeployModelRequest parsed from `localManifest`
-// it returns the DeployedModelRequest object that was used in yaml format.
+// applyModel deploys the CreatePipelineJobRequest parsed from `localManifest`
+// it returns the CreatePipelineJobRequest object that was used in yaml format.
 func (d *deployer) applyPipeline(ctx context.Context, localManifest string) ([]byte, error) {
 
 	pipelineRequest, err := pipelineRequestFromManifest(localManifest)
 	if err != nil {
-		return nil, fmt.Errorf("unable to load DeployModelRequest from manifest: %v", err)
+		return nil, fmt.Errorf("unable to load CreatePipelineJobRequest from manifest: %v", err)
 	}
 
 	if err := deployPipeline(ctx, d.aiPlatformService, d.params.parent, pipelineRequest); err != nil {

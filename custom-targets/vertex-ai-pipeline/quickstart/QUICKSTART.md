@@ -7,7 +7,7 @@ This quickstart demonstrates how to deploy a ML Pipeline to an target environmen
 
 ## 1. Clone Repository
 
-Clone this repository and navigate to the quickstart directory (`cloud-deploy-samples/custom-targets/vertex-ai/quickstart`) since the commands provided expect to be executed from that directory.
+Clone this repository and navigate to the quickstart directory (`cloud-deploy-samples/custom-targets/vertex-ai-pipeline/quickstart`) since the commands provided expect to be executed from that directory.
 
 ## 2. Environment variables
 
@@ -65,14 +65,17 @@ The default service account, `{project_num}-compute@developer.gserviceaccount.co
        --role="roles/aiplatform.user"
    ```
 
-4. Build and Register a Custom Target Type for Vertex AI
-
-From within the `quickstart` directory, run this command to build the Vertex AI model deployer image and
-install the custom target resources:
+4. Create a bucket
 
 ```shell
 gsutil mb -l $REGION -p $PROJECT_ID gs://$BUCKET_NAME
 ```
+
+
+5. Build and Register a Custom Target Type for Vertex AI
+
+From within the `quickstart` directory, run this command to build the Vertex AI model deployer image and
+install the custom target resources:
 
 ```shell
 ../build_and_register.sh -p $PROJECT_ID -r $REGION
@@ -114,7 +117,7 @@ gcloud deploy releases create release-001 \
     --project=$PROJECT_ID \
     --region=$REGION \
     --source=$TMPDIR/configuration \
-    --deploy-parameters="customTarget/vertexAIPipeline=projects/$PROJECT_ID/locations/$REGION/pipelineJobs/rlhf-tune-pipeline-20240610184812"
+    --deploy-parameters="customTarget/vertexAIPipeline=https://us-central1-kfp.pkg.dev/scortabarria-internship/scortabarria-internship-rlhf-pipelines/rlhf-tune-pipeline/sha256:e739c5c310d406f8a6a9133b0c97bf9a249715da0a507505997ced042e3e0f17"
 ```
 
 ### Explanation of command line flags
@@ -136,29 +139,27 @@ is specified by `--project` and `--region` respectively.
 To check release details, run this command:
 
 ```shell
-gcloud deploy releases describe release-001 --delivery-pipeline=vertex-ai-cloud-deploy-pipeline --project=$PROJECT_ID --region=$REGION
+gcloud deploy releases describe release-001 --delivery-pipeline=pipeline-cd --project=$PROJECT_ID --region=$REGION
 ```
 
 Run this command to filter only the render status of the release:
 
 ```shell
-gcloud deploy releases describe release-001 --delivery-pipeline=vertex-ai-cloud-deploy-pipeline --project=$PROJECT_ID --region=$REGION --format "(renderState)"
+gcloud deploy releases describe release-001 --delivery-pipeline=pipeline-cd --project=$PROJECT_ID --region=$REGION --format "(renderState)"
 ```
 
 ## 8. Monitor rollout status
 
 In the [Cloud Deploy UI](https://cloud.google.com/deploy) for your project click on the
-`vertex-ai-cloud-deploy-pipeline` delivery pipeline. Here you can see the release created and the rollout to the target for the release.
+`pipeline-cd` delivery pipeline. Here you can see the release created and the rollout to the target for the release.
 
 You can also describe the rollout created using the following command:
 
 ```shell
-gcloud deploy rollouts describe release-001-to-prod-endpoint-0001 --release=release-001 --delivery-pipeline=vertex-ai-cloud-deploy-pipeline --project=$PROJECT_ID --region=$REGION
+gcloud deploy rollouts describe release-001-to-staging-environment-0001 --release=release-001 --delivery-pipeline=pipeline-cd --project=$PROJECT_ID --region=$REGION
 ```
 
-It will take up to 15 minutes for the model to fully deploy.
-
-After the rollout completes, you can inspect the deployed models and traffic splits of the endpoint with `gcloud`
+After the rollout completes, you can inspect the deployed pipeline with `gcloud`
 
 ```shell
 gcloud ai endpoints describe $ENDPOINT_ID --region $REGION --project $PROJECT_ID
@@ -167,7 +168,7 @@ gcloud ai endpoints describe $ENDPOINT_ID --region $REGION --project $PROJECT_ID
 
 Monitor the post-deploy operation by querying the rollout:
 
-```
+```shell
 gcloud deploy rollouts describe release-001-to-prod-endpoint-0001 --release=release-001 --delivery-pipeline=vertex-ai-cloud-deploy-pipeline --project=$PROJECT_ID --region=$REGION --format "(phases[0].deploymentJobs.postdeployJob)"
 ```
 
