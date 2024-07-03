@@ -125,7 +125,9 @@ func (d *deployer) applyPipeline(ctx context.Context, localManifest string) ([]b
 		return nil, fmt.Errorf("unable to load CreatePipelineJobRequest from manifest: %v", err)
 	}
 
-	if err := deployPipeline(ctx, d.aiPlatformService, d.params.parent, pipelineRequest); err != nil {
+	parent := fmt.Sprintf("projects/%s/locations/%s", d.params.project, d.params.location)
+
+	if err := deployPipeline(ctx, d.aiPlatformService, parent, pipelineRequest); err != nil {
 		return nil, fmt.Errorf("unable to deploy pipeline: %v", err)
 	}
 

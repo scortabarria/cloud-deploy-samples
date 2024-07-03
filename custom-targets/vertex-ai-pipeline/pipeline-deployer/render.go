@@ -15,14 +15,15 @@
 package main
 
 import (
+	"cloud.google.com/go/storage"
 	"context"
 	"fmt"
 	"github.com/GoogleCloudPlatform/cloud-deploy-samples/custom-targets/util/applysetters"
 	"github.com/GoogleCloudPlatform/cloud-deploy-samples/custom-targets/util/clouddeploy"
-	"cloud.google.com/go/storage"
 	"google.golang.org/api/aiplatform/v1"
 	"os"
 	"sigs.k8s.io/yaml"
+	"encoding/json"
 )
 
 const (
@@ -33,7 +34,6 @@ const (
 	// Path to use when unarchiving the source input.
 	srcPath = "/workspace/source"
 )
-
 
 // renderer implements the handler interface for performing a render.
 type renderer struct {
@@ -120,14 +120,31 @@ func (r *renderer) renderCreatePipelineRequest() ([]byte, error) {
 	if err = yaml.Unmarshal(configuration, pipelineJob); err != nil {
 		return nil, fmt.Errorf("unable to parse configuration data into pipelineJob object: %v", err)
 	}
+	paramValues := r.params.pipelineParams
 
-	pipelineJob.TemplateUri = r.params.pipeline
+	if pipelineJob.TemplateUri == ""{
+		pipelineJob.TemplateUri = r.params.pipeline
+	}
+
+	if pipelineJob.DisplayName == ""{
+		pipelineJob.DisplayName = paramValues["model_display_name"]
+	}
+
+	paramValues["project_id"] = r.params.project
+	paramString, err := json.Marshal(paramValues)
+	if err != nil {
+		fmt.Printf("Error marshalling JSON: %s", err)
+		return nil, fmt.Errorf("unable to marshal params json")
+	}
+	pipelineJob.RuntimeConfig.ParameterValues = paramString
+
+	labelMap := make(map[string]string)
+	labelMap["environment"] = r.params.environment
+	pipelineJob.Labels = labelMap
 
 	request := &aiplatform.GoogleCloudAiplatformV1CreatePipelineJobRequest{PipelineJob: pipelineJob}
-
 	return yaml.Marshal(request)
 }
-
 
 // addCommonMetadata inserts metadata into the render result that should be present
 // regardless of render success or failure.
@@ -180,6 +197,3 @@ func loadConfigurationFile(configPath string) ([]byte, error) {
 	}
 	return nil, nil
 }
-
-
-

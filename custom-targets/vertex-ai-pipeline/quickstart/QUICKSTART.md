@@ -14,8 +14,10 @@ Clone this repository and navigate to the quickstart directory (`cloud-deploy-sa
 To simplify the commands in this quickstart, set the following environment variables with your values:
 
 ```shell
-export PROJECT_ID="YOUR_PROJECT_ID"
-export REGION="YOUR_REGION"
+export STAGING_PROJECT_ID="YOUR_STAGING_PROJECT_ID"
+export STAGING_REGION="YOUR_STAGING_REGION"
+export PROD_PROJECT_ID="YOUR_PROD_PROJECT_ID"
+export PROD_REGION="YOUR_PROD_REGION"
 export BUCKET_NAME="YOUR_BUCKET"
 export BUCKET_URI="gs://$BUCKET_NAME"
 export REPO_ID="YOUR_REPO"
@@ -28,8 +30,10 @@ export MODEL_DISPLAY_NAME="YOUR_DISPLAY_NAME"
 ```
 
 ```shell
-export PROJECT_ID="scortabarria-internship"
-export REGION="us-central1"
+export STAGING_PROJECT_ID="scortabarria-internship"
+export STAGING_REGION="us-central1"
+export PROD_PROJECT_ID="scortabarria-internship"
+export PROD_REGION="us-central1"
 export BUCKET_NAME="pipeline-artifacts-scorta"
 export BUCKET_URI="gs://$BUCKET_NAME"
 export REPO_ID="scortabarria-internship-rlhf-pipelines"
@@ -93,7 +97,7 @@ From within the `quickstart` directory, run this command to build the Vertex AI 
 install the custom target resources:
 
 ```shell
-../build_and_register.sh -p $PROJECT_ID -r $REGION
+../build_and_register.sh -p $STAGING_PROJECT_ID -r $STAGING_REGION
 ```
 
 For information about the `build_and_register.sh` script, see the [README](../README.md#build)
@@ -106,7 +110,7 @@ Within the `quickstart` directory, run this second command to make a temporary c
 
 ```shell
 export TMPDIR=$(mktemp -d)
-./replace_variables.sh -p $PROJECT_ID -r $REGION -t $TMPDIR -b $BUCKET_NAME -f $PREFERENCE_DATASET -m $PROMPT_DATASET -l $LARGE_MODEL_REFERENCE -d $MODEL_DISPLAY_NAME
+./replace_variables.sh -s $STAGING_PROJECT_ID -r $STAGING_REGION -p $PROD_PROJECT_ID -o $PROD_REGION -t $TMPDIR -b $BUCKET_NAME -f $PREFERENCE_DATASET -m $PROMPT_DATASET -l $LARGE_MODEL_REFERENCE -d $MODEL_DISPLAY_NAME
 ```
 
 The command does the following:
@@ -118,7 +122,7 @@ The command does the following:
 Lastly, apply the Cloud Deploy configuration defined in `clouddeploy.yaml`:
 
 ```shell
-gcloud deploy apply --file=$TMPDIR/clouddeploy.yaml --project=$PROJECT_ID --region=$REGION
+gcloud deploy apply --file=$TMPDIR/clouddeploy.yaml --project=$STAGING_PROJECT_ID --region=$STAGING_REGION
 ```
 
 ## 7. Create a release and rollout
@@ -129,10 +133,10 @@ creates a rollout that deploys the first model version to the target.
 ```shell
 gcloud deploy releases create release-001 \
     --delivery-pipeline=pipeline-cd \
-    --project=$PROJECT_ID \
-    --region=$REGION \
+    --project=$STAGING_PROJECT_ID \
+    --region=$STAGING_REGION \
     --source=$TMPDIR/configuration \
-    --deploy-parameters="customTarget/vertexAIPipeline=https://$REGION-kfp.pkg.dev/$PROJECT_ID/$REPO_ID/$PACKAGE_ID/$TAG_OR_VERSION"
+    --deploy-parameters="customTarget/vertexAIPipeline=https://$STAGING_REGION-kfp.pkg.dev/$STAGING_PROJECT_ID/$REPO_ID/$PACKAGE_ID/$TAG_OR_VERSION"
 ```
 
 ### Explanation of command line flags
@@ -147,6 +151,18 @@ which specifies the full resource name of the model to deploy
 The remaining flags specify the Cloud Deploy Delivery Pipeline. `--delivery-pipeline` is the name of
 the delivery pipeline where the release will be created, and the project and region of the pipeline
 is specified by `--project` and `--region` respectively.
+
+
+## 8. Promote a release
+
+```shell
+gcloud deploy releases promote release-001 \
+    --delivery-pipeline=pipeline-cd \
+    --project=$PROJECT_ID \
+    --region=$REGION \
+    --source=$TMPDIR/configuration \
+    --deploy-parameters="customTarget/vertexAIPipeline=https://$REGION-kfp.pkg.dev/$PROJECT_ID/$REPO_ID/$PACKAGE_ID/$TAG_OR_VERSION"
+```
 
 
 ### Monitor the release's progress

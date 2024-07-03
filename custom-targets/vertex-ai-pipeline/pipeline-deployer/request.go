@@ -22,6 +22,7 @@ import (
 	"os"
 	//"strconv"
 	"cloud.google.com/go/storage"
+	"encoding/json"
 )
 
 // Environment variable keys specific to the vertex ai deployer. These are provided via
@@ -30,16 +31,17 @@ const (
 	pipelineEnvKey = "CLOUD_DEPLOY_customTarget_vertexAIPipeline"
 	// parentEnvKey          = "CLOUD_DEPLOY_customTarget_vertexAIParent"
 	configPathKey  = "CLOUD_DEPLOY_customTarget_vertexAIPipelineJobConfiguration" //?????
-	// paramValsKey   = "CLOUD_DEPLOY_customTarget_vertexAIPipelineJobParameterValues"
+	paramValsKey   = "CLOUD_DEPLOY_customTarget_vertexAIPipelineJobParameterValues"
 	locValsKey     = "CLOUD_DEPLOY_customTarget_location"
 	projectValsKey = "CLOUD_DEPLOY_customTarget_projectID"
+	envValsKey = "CLOUD_DEPLOY_customTarget_environment"
 )
 
 // deploy parameters that the custom target requires to be present and provided during render and deploy operations.
-const (
-	pipelineDPKey = "customTarget/vertexAIPipeline"
-	//parentDPKey   = "customTarget/vertexAIParent"
-)
+// const (
+// 	pipelineDPKey = "customTarget/vertexAIPipeline"
+// 	//parentDPKey   = "customTarget/vertexAIParent"
+// )
 
 // requestHandler interface provides methods for handling the Cloud Deploy params.
 type requestHandler interface {
@@ -74,13 +76,17 @@ func createRequestHandler(cloudDeployRequest interface{}, params *params, gcsCli
 
 // params contains the deploy parameter values passed into the execution environment.
 type params struct {
-	parent string
+	project string
 
 	pipeline string
 
 	configPath string
 
 	location string
+
+	pipelineParams map[string]string
+
+	environment string
 }
 
 // determineParams returns the supported params provided in the execution environment via environment variables.
@@ -105,7 +111,7 @@ func determineParams() (*params, error) {
 		return nil, fmt.Errorf("environment variable %s contains empty string", projectValsKey)
 	}
 
-	parent := fmt.Sprintf("projects/%s/locations/%s", project, location)
+	
 
 	pipeline, found := os.LookupEnv(pipelineEnvKey)
 	if !found {
@@ -117,21 +123,40 @@ func determineParams() (*params, error) {
 		return nil, fmt.Errorf("environment variable %s contains empty string", pipelineEnvKey)
 	}
 
-	// pipelineParams, found := os.LookupEnv(paramValsKey)
+	paramString, found := os.LookupEnv(paramValsKey)
 	if !found {
 		fmt.Printf("Required environment variable %s not found. \n", paramValsKey)
 		return nil, fmt.Errorf("required environment variable %s not found", paramValsKey)
 	}
-	if len(paramValsKey) == 0 {
+	var pipelineParams map[string]string
+	err := json.Unmarshal([]byte(paramString), &pipelineParams)
+	if err != nil {
+		fmt.Printf("Error unmarshalling JSON: %s", err)
+		return nil, fmt.Errorf("unable to unmarshal params json")
+	}
+
+	if len(pipelineParams) == 0 {
 		fmt.Printf("environment variable %s is empty.\n", paramValsKey)
 		return nil, fmt.Errorf("environment variable %s contains empty string", paramValsKey)
 	}
 
+	env, found := os.LookupEnv(envValsKey)
+	if !found {
+		fmt.Printf("Required environment variable %s not found. Please verify that a valid Vertex AI pipeline resource name was provided through this deploy parameter.\n", envValsKey)
+		return nil, fmt.Errorf("required environment variable %s not found", envValsKey)
+	}
+	if env == "" {
+		fmt.Printf("environment variable %s is empty. Please verify that a valid Vertex AI pipeline resource name was provided through this deploy parameter.\n", envValsKey)
+		return nil, fmt.Errorf("environment variable %s contains empty string", envValsKey)
+	}
+
 	return &params{
-		parent:      parent,
+		project:      project,
 		pipeline:    pipeline,
 		configPath:  os.Getenv(configPathKey),
 		location:    location,
+		pipelineParams: pipelineParams,
+		environment: env,
 		
 	}, nil
 }

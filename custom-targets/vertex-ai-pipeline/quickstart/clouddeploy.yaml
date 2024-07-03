@@ -19,7 +19,10 @@ serialPipeline:
   stages:
   - targetId: staging-environment
     profiles: []
+  - targetId: prod-environment
+    profiles: []
 ---
+
 apiVersion: deploy.cloud.google.com/v1
 kind: Target
 metadata:
@@ -28,6 +31,33 @@ customTarget:
   customTargetType: vertex-ai-pipeline
 deployParameters:
   customTarget/vertexAIPipelineJobConfiguration: "staging/pipelineJob.yaml"
-  customTarget/VertexAIPipeline: "$REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$PKG_ID/$VERSION"
-  customTarget/projectID: "$PROJECT_ID"
-  customTarget/location: "$REGION"
+  # customTarget/VertexAIPipeline: "$STAGING_REGION-docker.pkg.dev/$STAGING_PROJECT_ID/$REPO/$PKG_ID/$VERSION"
+  customTarget/projectID: "$STAGING_PROJECT_ID"
+  customTarget/location: "$STAGING_REGION"
+  customTarget/vertexAIPipelineJobParameterValues: '{
+    "preference_dataset": "$PREFERENCE_DATASET",
+    "prompt_dataset": "$PROMPT_DATASET",
+    "large_model_reference": "$LARGE_MODEL_REFERENCE",
+    "model_display_name": "$MODEL_DISPLAY_NAME"
+  }'
+  customTarget/environment: staging
+---
+
+apiVersion: deploy.cloud.google.com/v1
+kind: Target
+metadata:
+  name: prod-environment
+customTarget:
+  customTargetType: vertex-ai-pipeline
+deployParameters:
+  customTarget/vertexAIPipelineJobConfiguration: "staging/pipelineJob.yaml"
+  # customTarget/VertexAIPipeline: "$REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$PKG_ID/$VERSION"
+  customTarget/vertexAIPipelineJobParameterValues: '{
+    "preference_dataset": "$PREFERENCE_DATASET",
+    "prompt_dataset": "$PROMPT_DATASET",
+    "large_model_reference": "$LARGE_MODEL_REFERENCE",
+    "model_display_name": "$MODEL_DISPLAY_NAME"
+  }'
+  customTarget/projectID: "$PROD_PROJECT_ID"
+  customTarget/location: "$PROD_REGION"
+  customTarget/environment: production

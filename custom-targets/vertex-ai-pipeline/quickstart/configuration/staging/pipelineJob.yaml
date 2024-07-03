@@ -1,12 +1,6 @@
-labels:
-  environment: staging
+# labels:
+#   environment: staging
 serviceAccount: 616537680697-compute@developer.gserviceaccount.com
 runtimeConfig:
   gcsOutputDirectory: gs://$BUCKET_NAME
   failurePolicy: PIPELINE_FAILURE_POLICY_FAIL_SLOW
-  parameterValues:
-    project_id: $PROJECT_ID
-    large_model_reference: $LARGE_MODEL_REFERENCE
-    preference_dataset: $PREFERENCE_DATASET
-    prompt_dataset: $PROMPT_DATASET
-displayName: $DISPLAY_NAME
