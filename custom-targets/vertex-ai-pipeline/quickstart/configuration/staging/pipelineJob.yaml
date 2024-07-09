@@ -1,5 +1,3 @@
-# labels:
-#   environment: staging
 serviceAccount: 616537680697-compute@developer.gserviceaccount.com
 runtimeConfig:
   gcsOutputDirectory: gs://$BUCKET_NAME

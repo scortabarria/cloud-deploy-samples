@@ -1,4 +1,4 @@
-# Cloud Deploy Vertex AI Model Deployer Quickstart
+# Cloud Deploy Vertex AI Pipeline Deployer Quickstart
 
 ## Overview
 
@@ -14,6 +14,7 @@ Clone this repository and navigate to the quickstart directory (`cloud-deploy-sa
 To simplify the commands in this quickstart, set the following environment variables with your values:
 
 ```shell
+export PIPELINE_PROJECT_ID="YOUR_PIPELINE_PROJECT_ID"
 export STAGING_PROJECT_ID="YOUR_STAGING_PROJECT_ID"
 export STAGING_REGION="YOUR_STAGING_REGION"
 export PROD_PROJECT_ID="YOUR_PROD_PROJECT_ID"
@@ -30,9 +31,11 @@ export MODEL_DISPLAY_NAME="YOUR_DISPLAY_NAME"
 ```
 
 ```shell
-export STAGING_PROJECT_ID="scortabarria-internship"
+export PIPELINE_PROJECT_ID="scortabarria-internship"
+export PIPELINE_REGION="us-central1"
+export STAGING_PROJECT_ID="imara-staging"
 export STAGING_REGION="us-central1"
-export PROD_PROJECT_ID="scortabarria-internship"
+export PROD_PROJECT_ID="imara-prod"
 export PROD_REGION="us-central1"
 export BUCKET_NAME="pipeline-artifacts-scorta"
 export BUCKET_URI="gs://$BUCKET_NAME"
@@ -42,7 +45,7 @@ export TAG_OR_VERSION="sha256:e739c5c310d406f8a6a9133b0c97bf9a249715da0a50750599
 export PREFERENCE_DATASET="gs://scortabarria-internship-rlhf-artifacts/data/preference/*.jsonl"
 export PROMPT_DATASET="gs://scortabarria-internship-rlhf-artifacts/data/prompt/*.jsonl"
 export LARGE_MODEL_REFERENCE="text-bison@001"
-export MODEL_DISPLAY_NAME="$REGION/$PROJECT_ID"
+export MODEL_DISPLAY_NAME="$REGION/$PIPELINE_PROJECT_ID"
 
 ```
 ## 3. Prerequisites
@@ -52,9 +55,15 @@ export MODEL_DISPLAY_NAME="$REGION/$PROJECT_ID"
 
 ### APIs
 Enable the Cloud Deploy API, Compute Engine API, and Vertex AI API.
+
    ```shell
-   gcloud services enable clouddeploy.googleapis.com aiplatform.googleapis.com compute.googleapis.com --project $PROJECT_ID
+   gcloud services enable clouddeploy.googleapis.com aiplatform.googleapis.com compute.googleapis.com --project $PIPELINE_PROJECT_ID
    ```
+
+    ```shell
+   gcloud services enable clouddeploy.googleapis.com aiplatform.googleapis.com compute.googleapis.com --project $STAGING_PROJECT_ID
+   ```
+
 ### Permissions
 The default service account, `{project_num}-compute@developer.gserviceaccount.com`, used by Cloud Deploy needs the
    following roles:
@@ -62,42 +71,67 @@ The default service account, `{project_num}-compute@developer.gserviceaccount.co
 1. `roles/clouddeploy.jobRunner` - required by Cloud Deploy
 
    ```shell
-   gcloud projects add-iam-policy-binding $PROJECT_ID \
-       --member=serviceAccount:$(gcloud projects describe $PROJECT_ID \
+   gcloud projects add-iam-policy-binding $PIPELINE_PROJECT_ID \
+       --member=serviceAccount:$(gcloud projects describe $PIPELINE_PROJECT_ID \
        --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
        --role="roles/clouddeploy.jobRunner"
    ```
 2. `roles/clouddeploy.viewer` - required to access Cloud Deploy resources
 
    ```shell
-   gcloud projects add-iam-policy-binding $PROJECT_ID \
-       --member=serviceAccount:$(gcloud projects describe $PROJECT_ID \
+   gcloud projects add-iam-policy-binding $PIPELINE_PROJECT_ID \
+       --member=serviceAccount:$(gcloud projects describe $PIPELINE_PROJECT_ID \
        --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
        --role="roles/clouddeploy.viewer"
    ```
 3. `roles/aiplatform.user` - required to access the models and deploy endpoints in the custom target
 
    ```shell
-   gcloud projects add-iam-policy-binding $PROJECT_ID \
-       --member=serviceAccount:$(gcloud projects describe $PROJECT_ID \
+   gcloud projects add-iam-policy-binding $PIPELINE_PROJECT_ID \
+       --member=serviceAccount:$(gcloud projects describe $PIPELINE_PROJECT_ID \
        --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
        --role="roles/aiplatform.user"
    ```
 
-4. Create a bucket
+
+      ```shell
+   gcloud projects add-iam-policy-binding $STAGING_PROJECT_ID \
+       --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
+       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
+       --role="roles/clouddeploy.jobRunner"
+   ```
+
+   ```shell
+   gcloud projects add-iam-policy-binding $STAGING_PROJECT_ID \
+       --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
+       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
+       --role="roles/clouddeploy.viewer"
+   ```
+
+   ```shell
+   gcloud projects add-iam-policy-binding $STAGING_PROJECT_ID \
+       --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
+       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
+       --role="roles/aiplatform.user"
+   ```
+
+
+## 4. Create a bucket
+
+From the `quickstart` directory, run this command to create a bucket in Cloud Storage:
 
 ```shell
-gsutil mb -l $REGION -p $PROJECT_ID gs://$BUCKET_NAME
+gsutil mb -l $PIPELINE_REGION -p $PIPELINE_PROJECT_ID gs://$BUCKET_NAME
 ```
 
 
-5. Build and Register a Custom Target Type for Vertex AI
+## 5. Build and Register a Custom Target Type for Vertex AI
 
 From within the `quickstart` directory, run this command to build the Vertex AI model deployer image and
 install the custom target resources:
 
 ```shell
-../build_and_register.sh -p $STAGING_PROJECT_ID -r $STAGING_REGION
+../build_and_register.sh -p $PIPELINE_PROJECT_ID -r $PIPELINE_REGION
 ```
 
 For information about the `build_and_register.sh` script, see the [README](../README.md#build)
@@ -105,25 +139,30 @@ For information about the `build_and_register.sh` script, see the [README](../RE
 
 ## 6. Create delivery pipeline, target, and skaffold
 
-Within the `quickstart` directory, run this second command to make a temporary copy of `clouddeploy.yaml` and
-`configuration/skaffold.yaml`, and to replace placeholders in the copies with actual values
+Within the `quickstart` directory, run this second command to make a temporary copy of `clouddeploy.yaml`, `configuration/skaffold.yaml` and
+`configuration/staging/pipelineJob.yaml`, and to replace placeholders in the copies with actual values:
 
 ```shell
 export TMPDIR=$(mktemp -d)
 ./replace_variables.sh -s $STAGING_PROJECT_ID -r $STAGING_REGION -p $PROD_PROJECT_ID -o $PROD_REGION -t $TMPDIR -b $BUCKET_NAME -f $PREFERENCE_DATASET -m $PROMPT_DATASET -l $LARGE_MODEL_REFERENCE -d $MODEL_DISPLAY_NAME
 ```
 
+```shell
+export TMPDIR=$(mktemp -d)
+./replace_variables.sh -a $PIPELINE_PROJECT_ID -b $PIPELINE_REGION -s $STAGING_PROJECT_ID -r $STAGING_REGION -p $PROD_PROJECT_ID -o $PROD_REGION -t $TMPDIR -b $BUCKET_NAME -f $PREFERENCE_DATASET -m $PROMPT_DATASET -l $LARGE_MODEL_REFERENCE -d $MODEL_DISPLAY_NAME
+```
+
 The command does the following:
 1. Creates temporary directory $TMPDIR and copies `clouddeploy.yaml` and `configuration` into it.
-2. Replaces the placeholders in `$TMPDIR/clouddeploy.yaml`
+2. Replaces the placeholders in `$TMPDIR/clouddeploy.yaml`, `configuration/skaffold.yaml`, and `configuration/staging/pipelineJob.yaml`
 3. Obtains the URL of the latest version of the custom image, built in step 6, and sets it in `$TMPDIR/configuration/skaffold.yaml`
-
 
 Lastly, apply the Cloud Deploy configuration defined in `clouddeploy.yaml`:
 
 ```shell
-gcloud deploy apply --file=$TMPDIR/clouddeploy.yaml --project=$STAGING_PROJECT_ID --region=$STAGING_REGION
+gcloud deploy apply --file=$TMPDIR/clouddeploy.yaml --project=$PIPELINE_PROJECT_ID --region=$PIPELINE_REGION
 ```
+
 
 ## 7. Create a release and rollout
 
@@ -131,12 +170,12 @@ Create a Cloud Deploy release for the configuration defined in the `configuratio
 creates a rollout that deploys the first model version to the target.
 
 ```shell
-gcloud deploy releases create release-001 \
+gcloud deploy releases create release-002 \
     --delivery-pipeline=pipeline-cd \
-    --project=$STAGING_PROJECT_ID \
-    --region=$STAGING_REGION \
+    --project=$PIPELINE_PROJECT_ID \
+    --region=$PIPELINE_REGION \
     --source=$TMPDIR/configuration \
-    --deploy-parameters="customTarget/vertexAIPipeline=https://$STAGING_REGION-kfp.pkg.dev/$STAGING_PROJECT_ID/$REPO_ID/$PACKAGE_ID/$TAG_OR_VERSION"
+    --deploy-parameters="customTarget/vertexAIPipeline=https://$PIPELINE_REGION-kfp.pkg.dev/$PIPELINE_PROJECT_ID/$REPO_ID/$PACKAGE_ID/$TAG_OR_VERSION"
 ```
 
 ### Explanation of command line flags
@@ -153,31 +192,20 @@ the delivery pipeline where the release will be created, and the project and reg
 is specified by `--project` and `--region` respectively.
 
 
-## 8. Promote a release
-
-```shell
-gcloud deploy releases promote release-001 \
-    --delivery-pipeline=pipeline-cd \
-    --project=$PROJECT_ID \
-    --region=$REGION \
-    --source=$TMPDIR/configuration \
-    --deploy-parameters="customTarget/vertexAIPipeline=https://$REGION-kfp.pkg.dev/$PROJECT_ID/$REPO_ID/$PACKAGE_ID/$TAG_OR_VERSION"
-```
-
-
 ### Monitor the release's progress
 
 To check release details, run this command:
 
 ```shell
-gcloud deploy releases describe release-001 --delivery-pipeline=pipeline-cd --project=$PROJECT_ID --region=$REGION
+gcloud deploy releases describe release-001 --delivery-pipeline=pipeline-cd --project=$STAGING_PROJECT_ID --region=$STAGING_REGION
 ```
 
 Run this command to filter only the render status of the release:
 
 ```shell
-gcloud deploy releases describe release-001 --delivery-pipeline=pipeline-cd --project=$PROJECT_ID --region=$REGION --format "(renderState)"
+gcloud deploy releases describe release-001 --delivery-pipeline=pipeline-cd --project=$STAGING_PROJECT_ID --region=$STAGING_REGION --format "(renderState)"
 ```
+
 
 ## 8. Monitor rollout status
 
@@ -187,55 +215,59 @@ In the [Cloud Deploy UI](https://cloud.google.com/deploy) for your project click
 You can also describe the rollout created using the following command:
 
 ```shell
-gcloud deploy rollouts describe release-001-to-staging-environment-0001 --release=release-001 --delivery-pipeline=pipeline-cd --project=$PROJECT_ID --region=$REGION
+gcloud deploy rollouts describe release-001-to-staging-environment-0001 --release=release-001 --delivery-pipeline=pipeline-cd --project=$STAGING_PROJECT_ID --region=$STAGING_REGION
 ```
 
-After the rollout completes, you can inspect the deployed pipeline with `gcloud`
+ 
+## 9. Promote a release
+
+This promotes the release, automatically moving it to the next target environment.
 
 ```shell
-gcloud ai endpoints describe $ENDPOINT_ID --region $REGION --project $PROJECT_ID
+gcloud deploy releases promote \
+    --release=release-001 \
+    --delivery-pipeline=pipeline-cd \
+    --to-target=prod-environment \
+    --project=$PROD_PROJECT_ID \
+    --region=$PROD_REGION
 ```
-## 9. Inspect aliases in the deployed model 
 
-Monitor the post-deploy operation by querying the rollout:
+
+### Monitor the release's progress
+
+To check release details, run this command:
 
 ```shell
-gcloud deploy rollouts describe release-001-to-prod-endpoint-0001 --release=release-001 --delivery-pipeline=vertex-ai-cloud-deploy-pipeline --project=$PROJECT_ID --region=$REGION --format "(phases[0].deploymentJobs.postdeployJob)"
+gcloud deploy releases describe release-001 --delivery-pipeline=pipeline-cd --project=$PROD_PROJECT_ID --region=$PROD_REGION
 ```
 
-After the post-deploy job has succeeded, you can then inspect the deployed model and view its currently assigned aliases. `prod` and `champion` should be assigned.
+Run this command to filter only the render status of the release:
 
 ```shell
-gcloud ai models describe test_model --region $REGION --project $PROJECT_ID --format "(versionAliases)"
+gcloud deploy releases describe release-001 --delivery-pipeline=pipeline-cd --project=$PROD_PROJECT_ID --region=$PROD_REGION --format "(renderState)"
 ```
 
-## 10. Clean up
 
-To delete the endpoint after the quickstart, run the following commands:
+## 10. Monitor rollout status
 
-Obtain the id of the deployed model:
-```shell
-gcloud ai endpoints describe $ENDPOINT_ID --region $REGION --project $PROJECT_ID --format "(deployedModels[0].id)"
-```
+In the [Cloud Deploy UI](https://cloud.google.com/deploy) for your project click on the
+`pipeline-cd` delivery pipeline. Here you can see the release created and the rollout to the target for the release.
 
-Undeploy the model:
-```shell
-gcloud ai endpoints undeploy-model $ENDPOINT_ID --region $REGION --project $PROJECT_ID --deployed-model-id $DEPLOYED_MODEL_ID
-```
-
-Delete the endpoint:
-```shell
-gcloud ai endpoints delete $ENDPOINT_ID --region $REGION --project $PROJECT_ID
-```
-
-To delete the imported model:
+You can also describe the rollout created using the following command:
 
 ```shell
-gcloud ai models delete test_model --region $REGION --project $PROJECT_ID
+gcloud deploy rollouts describe release-001-to-staging-environment-0001 --release=release-001 --delivery-pipeline=pipeline-cd --project=$PROD_PROJECT_ID --region=$PROD_REGION
 ```
+
+
+## 11. Clean up
 
 To delete Cloud Deploy resources:
 
 ```shell
-gcloud deploy delete --file=$TMPDIR/clouddeploy.yaml --force --project=$PROJECT_ID --region=$REGION
+gcloud deploy delete --file=$TMPDIR/clouddeploy.yaml --force --project=$STAGING_PROJECT_ID --region=$STAGING_REGION
+```
+
+```shell
+gcloud deploy delete --file=$TMPDIR/clouddeploy.yaml --force --project=$PROD_PROJECT_ID --region=$PROD_REGION
 ```

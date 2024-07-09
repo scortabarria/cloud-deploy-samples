@@ -4,6 +4,12 @@ export _CT_IMAGE_NAME=vertexai
 
 while getopts "s:r:p:o:t:b:f:m:l:d:" arg; do
   case "${arg}" in
+    # a)
+    #   PIPELINE_PROJECT="${OPTARG}"
+    #   ;;
+    # b)
+    #   PIPELINE_REGION="${OPTARG}"
+    #   ;;
     s)
       STAGING_PROJECT="${OPTARG}"
       ;;
@@ -47,7 +53,7 @@ if [[ ! -v STAGING_PROJECT || ! -v STAGING_REGION || ! -v PROD_PROJECT || ! -v P
 fi
 
 # get the location where the custom image was uploaded
-AR_REPO=$STAGING_REGION-docker.pkg.dev/$STAGING_PROJECT/cd-custom-targets
+AR_REPO=us-central1-docker.pkg.dev/scortabarria-internship/cd-custom-targets
 
 # get the image digest of the most recently built image
 IMAGE_SHA=$(gcloud -q artifacts docker images describe "${AR_REPO}/${_CT_IMAGE_NAME}:latest" --format 'get(image_summary.digest)')

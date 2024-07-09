@@ -65,7 +65,6 @@ func (d *deployer) process(ctx context.Context) error {
 	}
 	fmt.Printf("Uploaded deploy results to %s\n", rURI)
 	return nil
-
 }
 
 // deploy performs the Vertex AI pipeline deployment
@@ -102,7 +101,6 @@ func (d *deployer) downloadManifest(ctx context.Context) error {
 	}
 
 	fmt.Printf("Downloaded deploy input manifest from: %s\n", downloadPath)
-
 	return nil
 }
 
@@ -130,7 +128,5 @@ func (d *deployer) applyPipeline(ctx context.Context, localManifest string) ([]b
 	if err := deployPipeline(ctx, d.aiPlatformService, parent, pipelineRequest); err != nil {
 		return nil, fmt.Errorf("unable to deploy pipeline: %v", err)
 	}
-
 	return yaml.Marshal(pipelineRequest)
 }
-
