@@ -34,6 +34,7 @@ const (
 	locValsKey     = "CLOUD_DEPLOY_customTarget_location"
 	projectValsKey = "CLOUD_DEPLOY_customTarget_projectID"
 	envValsKey     = "CLOUD_DEPLOY_customTarget_environment"
+	bucketValsKey     = "CLOUD_DEPLOY_customTarget_bucket"
 )
 
 // requestHandler interface provides methods for handling the Cloud Deploy params.
@@ -88,6 +89,8 @@ type params struct {
 
 	// The label for the target environment, such as staging or production
 	environment string
+
+	bucket string
 }
 
 // determineParams returns the supported params provided in the execution environment via environment variables.
@@ -98,6 +101,14 @@ func determineParams() (*params, error) {
 	}
 	if location == "" {
 		return nil, fmt.Errorf("environment variable %s contains empty string", locValsKey)
+	}
+
+	bucket, found := os.LookupEnv(bucketValsKey)
+	if !found {
+		return nil, fmt.Errorf("environment variable %s not found", bucketValsKey)
+	}
+	if bucket == "" {
+		return nil, fmt.Errorf("environment variable %s contains empty string", bucketValsKey)
 	}
 
 	project, found := os.LookupEnv(projectValsKey)
@@ -153,5 +164,6 @@ func determineParams() (*params, error) {
 		location:       location,
 		pipelineParams: pipelineParams,
 		environment:    env,
+		bucket:         bucket,
 	}, nil
 }

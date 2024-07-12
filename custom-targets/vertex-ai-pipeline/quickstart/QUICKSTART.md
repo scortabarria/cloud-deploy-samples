@@ -19,13 +19,15 @@ export STAGING_PROJECT_ID="YOUR_STAGING_PROJECT_ID"
 export STAGING_REGION="YOUR_STAGING_REGION"
 export PROD_PROJECT_ID="YOUR_PROD_PROJECT_ID"
 export PROD_REGION="YOUR_PROD_REGION"
-export BUCKET_NAME="YOUR_BUCKET"
-export BUCKET_URI="gs://$BUCKET_NAME"
+export STAGING_BUCKET_NAME="YOUR_STAGING_BUCKET_NAME"
+export PROD_BUCKET_NAME="YOUR_PROD_BUCKET_NAME"
 export REPO_ID="YOUR_REPO"
 export PACKAGE_ID="YOUR_PACKAGE"
 export TAG_OR_VERSION="YOUR_TAG_OR_VERSION"
-export PREFERENCE_DATASET="YOUR_PREFERENCE_DATASET"
-export PROMPT_DATASET="YOUR_PROMPT_DATASET"
+export STAGING_PREF_DATA="YOUR_STAGING_PREFERENCE_DATASET"
+export STAGING_PROMPT_DATA="YOUR_STAGING_PROMPT_DATASET"
+export PROD_PREF_DATA="YOUR_PROD_PREFERENCE_DATASET"
+export PROD_PROMPT_DATA="YOUR_PROD_PROMPT_DATASET"
 export LARGE_MODEL_REFERENCE="YOUR_LARGE_MODEL_REFERENCE"
 export MODEL_DISPLAY_NAME="YOUR_DISPLAY_NAME"
 ```
@@ -37,15 +39,17 @@ export STAGING_PROJECT_ID="imara-staging"
 export STAGING_REGION="us-central1"
 export PROD_PROJECT_ID="imara-prod"
 export PROD_REGION="us-central1"
-export BUCKET_NAME="pipeline-artifacts-scorta"
-export BUCKET_URI="gs://$BUCKET_NAME"
+export STAGING_BUCKET_NAME="imara-staging-pipeline-artifacts-scorta"
+export PROD_BUCKET_NAME="imara-prod-pipeline-artifacts-scorta"
 export REPO_ID="scortabarria-internship-rlhf-pipelines"
 export PACKAGE_ID="rlhf-tune-pipeline"
 export TAG_OR_VERSION="sha256:e739c5c310d406f8a6a9133b0c97bf9a249715da0a507505997ced042e3e0f17"
-export PREFERENCE_DATASET="gs://scortabarria-internship-rlhf-artifacts/data/preference/*.jsonl"
-export PROMPT_DATASET="gs://scortabarria-internship-rlhf-artifacts/data/prompt/*.jsonl"
+export STAGING_PREF_DATA="gs://imara-staging-rlhf-artifacts/data/preference/*.jsonl"
+export STAGING_PROMPT_DATA="gs://imara-staging-rlhf-artifacts/data/prompt/*.jsonl"
+export PROD_PREF_DATA="gs://imara-staging-rlhf-artifacts/data/preference/*.jsonl"
+export PROD_PROMPT_DATA="gs://imara-staging-rlhf-artifacts/data/prompt/*.jsonl"
 export LARGE_MODEL_REFERENCE="text-bison@001"
-export MODEL_DISPLAY_NAME="$REGION/$PIPELINE_PROJECT_ID"
+export MODEL_DISPLAY_NAME="$PIPELINE_REGION/$PIPELINE_PROJECT_ID"
 
 ```
 ## 3. Prerequisites
@@ -91,28 +95,75 @@ The default service account, `{project_num}-compute@developer.gserviceaccount.co
        --member=serviceAccount:$(gcloud projects describe $PIPELINE_PROJECT_ID \
        --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
        --role="roles/aiplatform.user"
+
    ```
 
 
-      ```shell
-   gcloud projects add-iam-policy-binding $STAGING_PROJECT_ID \
+
+
+    ```shell
+    PROJECT_NUMBER=$(gcloud projects list \
+        --format="value(projectNumber)" \
+        --filter="projectId=${STAGING_PROJECT_ID}")
+
+    gcloud iam service-accounts add-iam-policy-binding \
+        ${PROJECT_NUMBER}-compute@developer.gserviceaccount.com \
+        --member=serviceAccount:${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com \
+        --role=roles/iam.serviceAccountUser \
+        --project=${STAGING_PROJECT_ID}
+
+    gcloud projects add-iam-policy-binding $STAGING_PROJECT_ID \
        --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
        --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
        --role="roles/clouddeploy.jobRunner"
-   ```
 
-   ```shell
-   gcloud projects add-iam-policy-binding $STAGING_PROJECT_ID \
+    gcloud projects add-iam-policy-binding $STAGING_PROJECT_ID \
        --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
        --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
        --role="roles/clouddeploy.viewer"
-   ```
 
-   ```shell
-   gcloud projects add-iam-policy-binding $STAGING_PROJECT_ID \
+    gcloud projects add-iam-policy-binding $STAGING_PROJECT_ID \
        --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
        --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
        --role="roles/aiplatform.user"
+
+    gcloud projects add-iam-policy-binding $STAGING_PROJECT_ID \
+       --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
+       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
+       --role="roles/artifactregistry.writer"
+
+
+
+    PROJECT_NUMBER=$(gcloud projects list \
+        --format="value(projectNumber)" \
+        --filter="projectId=${STAGING_PROJECT_ID}")
+
+    gcloud iam service-accounts add-iam-policy-binding \
+        ${PROJECT_NUMBER}-compute@developer.gserviceaccount.com \
+        --member=serviceAccount:${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com \
+        --role=roles/iam.serviceAccountUser \
+        --project=${PIPELINE_PROJECT_ID}
+
+    gcloud projects add-iam-policy-binding $PIPELINE_PROJECT_ID \
+       --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
+       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
+       --role="roles/clouddeploy.jobRunner"
+
+    gcloud projects add-iam-policy-binding $PIPELINE_PROJECT_ID \
+       --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
+       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
+       --role="roles/clouddeploy.viewer"
+
+    gcloud projects add-iam-policy-binding $PIPELINE_PROJECT_ID \
+       --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
+       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
+       --role="roles/aiplatform.user"
+
+     gcloud projects add-iam-policy-binding $PIPELINE_PROJECT_ID \
+       --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
+       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
+       --role="roles/artifactregistry.writer"
+
    ```
 
 
@@ -121,7 +172,12 @@ The default service account, `{project_num}-compute@developer.gserviceaccount.co
 From the `quickstart` directory, run this command to create a bucket in Cloud Storage:
 
 ```shell
-gsutil mb -l $PIPELINE_REGION -p $PIPELINE_PROJECT_ID gs://$BUCKET_NAME
+# gsutil mb -l $PIPELINE_REGION -p $PIPELINE_PROJECT_ID gs://$PIPELINE_BUCKET_NAME
+
+gsutil mb -l $STAGING_REGION -p $STAGING_PROJECT_ID gs://$STAGING_BUCKET_NAME
+
+gsutil mb -l $PROD_REGION -p $PROD_PROJECT_ID gs://$PROD_BUCKET_NAME
+
 ```
 
 
@@ -134,6 +190,7 @@ install the custom target resources:
 ../build_and_register.sh -p $PIPELINE_PROJECT_ID -r $PIPELINE_REGION
 ```
 
+
 For information about the `build_and_register.sh` script, see the [README](../README.md#build)
 
 
@@ -144,13 +201,13 @@ Within the `quickstart` directory, run this second command to make a temporary c
 
 ```shell
 export TMPDIR=$(mktemp -d)
-./replace_variables.sh -s $STAGING_PROJECT_ID -r $STAGING_REGION -p $PROD_PROJECT_ID -o $PROD_REGION -t $TMPDIR -b $BUCKET_NAME -f $PREFERENCE_DATASET -m $PROMPT_DATASET -l $LARGE_MODEL_REFERENCE -d $MODEL_DISPLAY_NAME
+./replace_variables.sh -s $STAGING_PROJECT_ID -r $STAGING_REGION -p $PROD_PROJECT_ID -o $PROD_REGION -t $TMPDIR -b $STAGING_BUCKET_NAME -c $PROD_BUCKET_NAME -f $STAGING_PREF_DATA -m $STAGING_PROMPT_DATA -l $LARGE_MODEL_REFERENCE -d $MODEL_DISPLAY_NAME -y $PROD_PREF_DATA -z $PROD_PROMPT_DATA
 ```
 
-```shell
+<!-- ```shell
 export TMPDIR=$(mktemp -d)
-./replace_variables.sh -a $PIPELINE_PROJECT_ID -b $PIPELINE_REGION -s $STAGING_PROJECT_ID -r $STAGING_REGION -p $PROD_PROJECT_ID -o $PROD_REGION -t $TMPDIR -b $BUCKET_NAME -f $PREFERENCE_DATASET -m $PROMPT_DATASET -l $LARGE_MODEL_REFERENCE -d $MODEL_DISPLAY_NAME
-```
+./replace_variables.sh -a $PIPELINE_PROJECT_ID -c $PIPELINE_REGION -s $STAGING_PROJECT_ID -r $STAGING_REGION -p $PROD_PROJECT_ID -o $PROD_REGION -t $TMPDIR -b $PIPELINE_BUCKET_NAME -f $STAGING_PREF_DATA -m $STAGING_PROMPT_DATA -l $LARGE_MODEL_REFERENCE -d $MODEL_DISPLAY_NAME
+``` -->
 
 The command does the following:
 1. Creates temporary directory $TMPDIR and copies `clouddeploy.yaml` and `configuration` into it.
@@ -170,12 +227,15 @@ Create a Cloud Deploy release for the configuration defined in the `configuratio
 creates a rollout that deploys the first model version to the target.
 
 ```shell
-gcloud deploy releases create release-002 \
+gcloud deploy releases create release-001 \
     --delivery-pipeline=pipeline-cd \
     --project=$PIPELINE_PROJECT_ID \
     --region=$PIPELINE_REGION \
     --source=$TMPDIR/configuration \
     --deploy-parameters="customTarget/vertexAIPipeline=https://$PIPELINE_REGION-kfp.pkg.dev/$PIPELINE_PROJECT_ID/$REPO_ID/$PACKAGE_ID/$TAG_OR_VERSION"
+```
+```shell
+gcloud deploy delete --file=$TMPDIR/clouddeploy.yaml --force --project=$PIPELINE_PROJECT_ID --region=$PIPELINE_REGION
 ```
 
 ### Explanation of command line flags
@@ -197,7 +257,7 @@ is specified by `--project` and `--region` respectively.
 To check release details, run this command:
 
 ```shell
-gcloud deploy releases describe release-001 --delivery-pipeline=pipeline-cd --project=$STAGING_PROJECT_ID --region=$STAGING_REGION
+gcloud deploy releases describe release-001 --delivery-pipeline=pipeline-cd --project=$PIPELINE_PROJECT_ID --region=$PIPELINE_REGION
 ```
 
 Run this command to filter only the render status of the release:
@@ -215,7 +275,7 @@ In the [Cloud Deploy UI](https://cloud.google.com/deploy) for your project click
 You can also describe the rollout created using the following command:
 
 ```shell
-gcloud deploy rollouts describe release-001-to-staging-environment-0001 --release=release-001 --delivery-pipeline=pipeline-cd --project=$STAGING_PROJECT_ID --region=$STAGING_REGION
+gcloud deploy rollouts describe release-001-to-staging-environment-0001 --release=release-001 --delivery-pipeline=pipeline-cd --project=$PIPELINE_PROJECT_ID --region=$PIPELINE_REGION
 ```
 
  
@@ -265,7 +325,7 @@ gcloud deploy rollouts describe release-001-to-staging-environment-0001 --releas
 To delete Cloud Deploy resources:
 
 ```shell
-gcloud deploy delete --file=$TMPDIR/clouddeploy.yaml --force --project=$STAGING_PROJECT_ID --region=$STAGING_REGION
+gcloud deploy delete --file=$TMPDIR/clouddeploy.yaml --force --project=$PIPELINE_PROJECT_ID --region=$PIPELINE_REGION
 ```
 
 ```shell

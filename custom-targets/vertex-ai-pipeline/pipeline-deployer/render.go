@@ -129,6 +129,10 @@ func (r *renderer) renderCreatePipelineRequest() ([]byte, error) {
 		pipelineJob.DisplayName = paramValues["model_display_name"]
 	}
 
+	if pipelineJob.RuntimeConfig.GcsOutputDirectory == "" {
+		pipelineJob.RuntimeConfig.GcsOutputDirectory = fmt.Sprintf("gs://%s", r.params.bucket)
+	}
+
 	paramValues["project_id"] = r.params.project
 	paramString, err := json.Marshal(paramValues)
 	if err != nil {

@@ -51,6 +51,7 @@ func newAIPlatformService(ctx context.Context, region string) (*aiplatform.Servi
 
 // deployPipeline performs the deployPipeline request and awaits the resulting operation until it completes, it times out or an error occurs.
 func deployPipeline(ctx context.Context, aiPlatformService *aiplatform.Service, parent string, request *aiplatform.GoogleCloudAiplatformV1CreatePipelineJobRequest) error {
+	fmt.Printf("PARENT: %s; REQUEST: %v AND: %s", parent, request.PipelineJob.RuntimeConfig, request.PipelineJob.DisplayName)
 	_, err := aiPlatformService.Projects.Locations.PipelineJobs.Create(parent, request.PipelineJob).Do()
 	if err != nil {
 		return fmt.Errorf("unable to deploy pipeline: %v", err)
