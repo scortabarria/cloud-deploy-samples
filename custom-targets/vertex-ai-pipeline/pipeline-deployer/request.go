@@ -28,13 +28,14 @@ import (
 // Environment variable keys specific to the vertex ai deployer. These are provided via
 // deploy parameters in Cloud Deploy.
 const (
-	pipelineEnvKey = "CLOUD_DEPLOY_customTarget_vertexAIPipeline"
-	configPathKey  = "CLOUD_DEPLOY_customTarget_vertexAIPipelineJobConfiguration"
-	paramValsKey   = "CLOUD_DEPLOY_customTarget_vertexAIPipelineJobParameterValues"
-	locValsKey     = "CLOUD_DEPLOY_customTarget_location"
-	projectValsKey = "CLOUD_DEPLOY_customTarget_projectID"
-	envValsKey     = "CLOUD_DEPLOY_customTarget_environment"
+	pipelineEnvKey    = "CLOUD_DEPLOY_customTarget_vertexAIPipeline"
+	configPathKey     = "CLOUD_DEPLOY_customTarget_vertexAIPipelineJobConfiguration"
+	paramValsKey      = "CLOUD_DEPLOY_customTarget_vertexAIPipelineJobParameterValues"
+	locValsKey        = "CLOUD_DEPLOY_customTarget_location"
+	projectValsKey    = "CLOUD_DEPLOY_customTarget_projectID"
+	envValsKey        = "CLOUD_DEPLOY_customTarget_environment"
 	bucketValsKey     = "CLOUD_DEPLOY_customTarget_bucket"
+	projNumberValsKey = "CLOUD_DEPLOY_customTarget_projectNumber"
 )
 
 // requestHandler interface provides methods for handling the Cloud Deploy params.
@@ -83,7 +84,7 @@ type params struct {
 	// file in the root working directory.
 	configPath string
 
-	// Pipeline parameters obtained via deploy parameters. Hold parameters necessary 
+	// Pipeline parameters obtained via deploy parameters. Hold parameters necessary
 	// for the createPipelineJobRequest, such as the prompt dataset
 	pipelineParams map[string]string
 
@@ -91,6 +92,8 @@ type params struct {
 	environment string
 
 	bucket string
+
+	projectNumber string
 }
 
 // determineParams returns the supported params provided in the execution environment via environment variables.
@@ -109,6 +112,14 @@ func determineParams() (*params, error) {
 	}
 	if bucket == "" {
 		return nil, fmt.Errorf("environment variable %s contains empty string", bucketValsKey)
+	}
+
+	projectNumber, found := os.LookupEnv(projNumberValsKey)
+	if !found {
+		return nil, fmt.Errorf("environment variable %s not found", projNumberValsKey)
+	}
+	if projectNumber == "" {
+		return nil, fmt.Errorf("environment variable %s contains empty string", projNumberValsKey)
 	}
 
 	project, found := os.LookupEnv(projectValsKey)
@@ -165,5 +176,6 @@ func determineParams() (*params, error) {
 		pipelineParams: pipelineParams,
 		environment:    env,
 		bucket:         bucket,
+		projectNumber:  projectNumber,
 	}, nil
 }

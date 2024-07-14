@@ -1,4 +1,2 @@
-serviceAccount: 76614354184-compute@developer.gserviceaccount.com
 runtimeConfig:
-  # gcsOutputDirectory: gs://$BUCKET_NAME
   failurePolicy: PIPELINE_FAILURE_POLICY_FAIL_SLOW

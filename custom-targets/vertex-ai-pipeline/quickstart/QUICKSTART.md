@@ -15,19 +15,32 @@ To simplify the commands in this quickstart, set the following environment varia
 
 ```shell
 export PIPELINE_PROJECT_ID="YOUR_PIPELINE_PROJECT_ID"
+export PIPELINE_REGION="YOUR_PIPELINE_REGION"
+export PIPELINE_PROJECT_NUMBER=$(gcloud projects list \
+        --format="value(projectNumber)" \
+        --filter="projectId=${PIPELINE_PROJECT_ID}")
+
 export STAGING_PROJECT_ID="YOUR_STAGING_PROJECT_ID"
 export STAGING_REGION="YOUR_STAGING_REGION"
+export STAGING_PROJECT_NUMBER=$(gcloud projects list \
+        --format="value(projectNumber)" \
+        --filter="projectId=${STAGING_PROJECT_ID}")
+export STAGING_BUCKET_NAME="YOUR_STAGING_BUCKET_NAME"
+export STAGING_PREF_DATA="YOUR_STAGING_PREFERENCE_DATASET"
+export STAGING_PROMPT_DATA="YOUR_STAGING_PROMPT_DATASET"
+
 export PROD_PROJECT_ID="YOUR_PROD_PROJECT_ID"
 export PROD_REGION="YOUR_PROD_REGION"
-export STAGING_BUCKET_NAME="YOUR_STAGING_BUCKET_NAME"
+export PROD_PROJECT_NUMBER=$(gcloud projects list \
+        --format="value(projectNumber)" \
+        --filter="projectId=${PROD_PROJECT_ID}")
 export PROD_BUCKET_NAME="YOUR_PROD_BUCKET_NAME"
+export PROD_PREF_DATA="YOUR_PROD_PREFERENCE_DATASET"
+export PROD_PROMPT_DATA="YOUR_PROD_PROMPT_DATASET"
+
 export REPO_ID="YOUR_REPO"
 export PACKAGE_ID="YOUR_PACKAGE"
 export TAG_OR_VERSION="YOUR_TAG_OR_VERSION"
-export STAGING_PREF_DATA="YOUR_STAGING_PREFERENCE_DATASET"
-export STAGING_PROMPT_DATA="YOUR_STAGING_PROMPT_DATASET"
-export PROD_PREF_DATA="YOUR_PROD_PREFERENCE_DATASET"
-export PROD_PROMPT_DATA="YOUR_PROD_PROMPT_DATASET"
 export LARGE_MODEL_REFERENCE="YOUR_LARGE_MODEL_REFERENCE"
 export MODEL_DISPLAY_NAME="YOUR_DISPLAY_NAME"
 ```
@@ -35,19 +48,31 @@ export MODEL_DISPLAY_NAME="YOUR_DISPLAY_NAME"
 ```shell
 export PIPELINE_PROJECT_ID="scortabarria-internship"
 export PIPELINE_REGION="us-central1"
+export PIPELINE_PROJECT_NUMBER=$(gcloud projects list \
+        --format="value(projectNumber)" \
+        --filter="projectId=${PIPELINE_PROJECT_ID}")
+
 export STAGING_PROJECT_ID="imara-staging"
 export STAGING_REGION="us-central1"
+export STAGING_PROJECT_NUMBER=$(gcloud projects list \
+        --format="value(projectNumber)" \
+        --filter="projectId=${STAGING_PROJECT_ID}")
+export STAGING_BUCKET_NAME="imara-staging-pipeline-artifacts-scorta"
+export STAGING_PREF_DATA="gs://imara-staging-rlhf-artifacts/data/preference/*.jsonl"
+export STAGING_PROMPT_DATA="gs://imara-staging-rlhf-artifacts/data/prompt/*.jsonl"
+
 export PROD_PROJECT_ID="imara-prod"
 export PROD_REGION="us-central1"
-export STAGING_BUCKET_NAME="imara-staging-pipeline-artifacts-scorta"
+export PROD_PROJECT_NUMBER=$(gcloud projects list \
+        --format="value(projectNumber)" \
+        --filter="projectId=${PROD_PROJECT_ID}")
 export PROD_BUCKET_NAME="imara-prod-pipeline-artifacts-scorta"
+export PROD_PREF_DATA="gs://imara-prod-rlhf-artifacts/data/preference/*.jsonl"
+export PROD_PROMPT_DATA="gs://imara-prod-rlhf-artifacts/data/prompt/*.jsonl"
+
 export REPO_ID="scortabarria-internship-rlhf-pipelines"
 export PACKAGE_ID="rlhf-tune-pipeline"
 export TAG_OR_VERSION="sha256:e739c5c310d406f8a6a9133b0c97bf9a249715da0a507505997ced042e3e0f17"
-export STAGING_PREF_DATA="gs://imara-staging-rlhf-artifacts/data/preference/*.jsonl"
-export STAGING_PROMPT_DATA="gs://imara-staging-rlhf-artifacts/data/prompt/*.jsonl"
-export PROD_PREF_DATA="gs://imara-staging-rlhf-artifacts/data/preference/*.jsonl"
-export PROD_PROMPT_DATA="gs://imara-staging-rlhf-artifacts/data/prompt/*.jsonl"
 export LARGE_MODEL_REFERENCE="text-bison@001"
 export MODEL_DISPLAY_NAME="$PIPELINE_REGION/$PIPELINE_PROJECT_ID"
 
@@ -66,6 +91,10 @@ Enable the Cloud Deploy API, Compute Engine API, and Vertex AI API.
 
     ```shell
    gcloud services enable clouddeploy.googleapis.com aiplatform.googleapis.com compute.googleapis.com --project $STAGING_PROJECT_ID
+   ```
+
+   ```shell
+   gcloud services enable clouddeploy.googleapis.com aiplatform.googleapis.com compute.googleapis.com --project $PROD_PROJECT_ID
    ```
 
 ### Permissions
@@ -99,71 +128,13 @@ The default service account, `{project_num}-compute@developer.gserviceaccount.co
    ```
 
 
+   ```shell
+   
 
-
-    ```shell
-    PROJECT_NUMBER=$(gcloud projects list \
-        --format="value(projectNumber)" \
-        --filter="projectId=${STAGING_PROJECT_ID}")
-
-    gcloud iam service-accounts add-iam-policy-binding \
-        ${PROJECT_NUMBER}-compute@developer.gserviceaccount.com \
-        --member=serviceAccount:${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com \
-        --role=roles/iam.serviceAccountUser \
-        --project=${STAGING_PROJECT_ID}
-
-    gcloud projects add-iam-policy-binding $STAGING_PROJECT_ID \
-       --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
-       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
-       --role="roles/clouddeploy.jobRunner"
-
-    gcloud projects add-iam-policy-binding $STAGING_PROJECT_ID \
-       --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
-       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
-       --role="roles/clouddeploy.viewer"
-
-    gcloud projects add-iam-policy-binding $STAGING_PROJECT_ID \
-       --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
+   gcloud projects add-iam-policy-binding $PROD_PROJECT_ID \
+       --member=serviceAccount:$(gcloud projects describe $PROD_PROJECT_ID \
        --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
        --role="roles/aiplatform.user"
-
-    gcloud projects add-iam-policy-binding $STAGING_PROJECT_ID \
-       --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
-       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
-       --role="roles/artifactregistry.writer"
-
-
-
-    PROJECT_NUMBER=$(gcloud projects list \
-        --format="value(projectNumber)" \
-        --filter="projectId=${STAGING_PROJECT_ID}")
-
-    gcloud iam service-accounts add-iam-policy-binding \
-        ${PROJECT_NUMBER}-compute@developer.gserviceaccount.com \
-        --member=serviceAccount:${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com \
-        --role=roles/iam.serviceAccountUser \
-        --project=${PIPELINE_PROJECT_ID}
-
-    gcloud projects add-iam-policy-binding $PIPELINE_PROJECT_ID \
-       --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
-       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
-       --role="roles/clouddeploy.jobRunner"
-
-    gcloud projects add-iam-policy-binding $PIPELINE_PROJECT_ID \
-       --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
-       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
-       --role="roles/clouddeploy.viewer"
-
-    gcloud projects add-iam-policy-binding $PIPELINE_PROJECT_ID \
-       --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
-       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
-       --role="roles/aiplatform.user"
-
-     gcloud projects add-iam-policy-binding $PIPELINE_PROJECT_ID \
-       --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
-       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
-       --role="roles/artifactregistry.writer"
-
    ```
 
 
@@ -201,7 +172,7 @@ Within the `quickstart` directory, run this second command to make a temporary c
 
 ```shell
 export TMPDIR=$(mktemp -d)
-./replace_variables.sh -s $STAGING_PROJECT_ID -r $STAGING_REGION -p $PROD_PROJECT_ID -o $PROD_REGION -t $TMPDIR -b $STAGING_BUCKET_NAME -c $PROD_BUCKET_NAME -f $STAGING_PREF_DATA -m $STAGING_PROMPT_DATA -l $LARGE_MODEL_REFERENCE -d $MODEL_DISPLAY_NAME -y $PROD_PREF_DATA -z $PROD_PROMPT_DATA
+./replace_variables.sh -s $STAGING_PROJECT_ID -r $STAGING_REGION -p $PROD_PROJECT_ID -o $PROD_REGION -t $TMPDIR -b $STAGING_BUCKET_NAME -c $PROD_BUCKET_NAME -f $STAGING_PREF_DATA -m $STAGING_PROMPT_DATA -l $LARGE_MODEL_REFERENCE -d $MODEL_DISPLAY_NAME -y $PROD_PREF_DATA -z $PROD_PROMPT_DATA -e $STAGING_PROJECT_NUMBER -g $PROD_PROJECT_NUMBER
 ```
 
 <!-- ```shell
@@ -227,7 +198,7 @@ Create a Cloud Deploy release for the configuration defined in the `configuratio
 creates a rollout that deploys the first model version to the target.
 
 ```shell
-gcloud deploy releases create release-001 \
+gcloud deploy releases create release-002 \
     --delivery-pipeline=pipeline-cd \
     --project=$PIPELINE_PROJECT_ID \
     --region=$PIPELINE_REGION \
@@ -263,7 +234,7 @@ gcloud deploy releases describe release-001 --delivery-pipeline=pipeline-cd --pr
 Run this command to filter only the render status of the release:
 
 ```shell
-gcloud deploy releases describe release-001 --delivery-pipeline=pipeline-cd --project=$STAGING_PROJECT_ID --region=$STAGING_REGION --format "(renderState)"
+gcloud deploy releases describe release-001 --delivery-pipeline=pipeline-cd --project=$PIPELINE_PROJECT_ID --region=$PIPELINE_REGION --format "(renderState)"
 ```
 
 
@@ -288,8 +259,8 @@ gcloud deploy releases promote \
     --release=release-001 \
     --delivery-pipeline=pipeline-cd \
     --to-target=prod-environment \
-    --project=$PROD_PROJECT_ID \
-    --region=$PROD_REGION
+    --project=$PIPELINE_PROJECT_ID \
+    --region=$PIPELINE_REGION
 ```
 
 

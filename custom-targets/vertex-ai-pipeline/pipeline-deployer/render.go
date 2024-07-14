@@ -133,6 +133,8 @@ func (r *renderer) renderCreatePipelineRequest() ([]byte, error) {
 		pipelineJob.RuntimeConfig.GcsOutputDirectory = fmt.Sprintf("gs://%s", r.params.bucket)
 	}
 
+	pipelineJob.ServiceAccount = fmt.Sprintf("%s-compute@developer.gserviceaccount.com", r.params.projectNumber)
+
 	paramValues["project_id"] = r.params.project
 	paramString, err := json.Marshal(paramValues)
 	if err != nil {

@@ -2,7 +2,7 @@
 
 export _CT_IMAGE_NAME=vertexai
 
-while getopts "s:r:p:o:t:b:c:f:m:y:z:l:d:" arg; do
+while getopts "s:r:p:o:t:b:c:f:m:y:z:l:d:e:g:" arg; do
   case "${arg}" in
     s)
       STAGING_PROJECT="${OPTARG}"
@@ -43,6 +43,12 @@ while getopts "s:r:p:o:t:b:c:f:m:y:z:l:d:" arg; do
     d)
       DISPLAY="${OPTARG}"
       ;;
+    e)
+      STAGING_PROJECT_NUMBER="${OPTARG}"
+      ;;
+    g)
+      PROD_PROJECT_NUMBER="${OPTARG}"
+      ;;
     *)
       usage
       exit 1
@@ -78,6 +84,8 @@ sed -i "s/\$LARGE_MODEL_REFERENCE/${MODEL_REFERENCE}/g" "$TMPDIR"/clouddeploy.ya
 sed -i "s|\$MODEL_DISPLAY_NAME|${DISPLAY}|g" "$TMPDIR"/clouddeploy.yaml
 sed -i "s|\$STAGING_BUCKET|${STAGING_BUCKET}|g" "$TMPDIR"/clouddeploy.yaml
 sed -i "s|\$PROD_BUCKET|${PROD_BUCKET}|g" "$TMPDIR"/clouddeploy.yaml
+sed -i "s|\$STAGING_PROJECT_NUMBER|${STAGING_PROJECT_NUMBER}|g" "$TMPDIR"/clouddeploy.yaml
+sed -i "s|\$PROD_PROJECT_NUMBER|${PROD_PROJECT_NUMBER}|g" "$TMPDIR"/clouddeploy.yaml
 
 
 # replace variables in configuration/skaffold.yaml with actual values
