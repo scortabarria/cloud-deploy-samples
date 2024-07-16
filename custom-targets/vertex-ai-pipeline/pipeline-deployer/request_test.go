@@ -1,60 +1,60 @@
 package main
 
 import (
-	"testing"
-	"github.com/GoogleCloudPlatform/cloud-deploy-samples/custom-targets/util/clouddeploy"
 	"cloud.google.com/go/storage"
 	"context"
 	"fmt"
+	"github.com/GoogleCloudPlatform/cloud-deploy-samples/custom-targets/util/clouddeploy"
 	"os"
+	"testing"
 	// "reflect"
-
 	// "google.golang.org/api/aiplatform/v1"
 	// "github.com/google/go-cmp/cmp"
 	// "io/ioutil"
 	// "os"
 )
 
-func TestCreateRequestHandler(t *testing.T){
+func TestCreateRequestHandler(t *testing.T) {
 	aiService, _ := newAIPlatformService(context.Background(), "us-central1")
 	req, err := createRequestHandler(&clouddeploy.RenderRequest{}, &params{}, &storage.Client{}, aiService)
-	if err != nil{
-		t.Errorf("Expected: success, Actual: %s", err, )
+	if err != nil {
+		t.Errorf("Expected: success, Actual: %s", err)
 	}
 	switch req.(type) {
 	case *renderer:
 		fmt.Println("Handler is a renderer")
 	default:
-		t.Errorf("Expected: renderer, Actual: uknown type" )
+		t.Errorf("Expected: renderer, Actual: uknown type")
 	}
 
 	req, err = createRequestHandler(&clouddeploy.DeployRequest{}, &params{}, &storage.Client{}, aiService)
-	if err != nil{
-		t.Errorf("Expected: success, Actual: %s", err, )
+	if err != nil {
+		t.Errorf("Expected: success, Actual: %s", err)
 	}
 	switch req.(type) {
 	case *deployer:
 		fmt.Println("Handler is a deployer")
 	default:
-		t.Errorf("Expected: deployer, Actual: uknown type" )
+		t.Errorf("Expected: deployer, Actual: uknown type")
 	}
 
 	req, err = createRequestHandler(&clouddeploy.RenderResult{}, &params{}, &storage.Client{}, aiService)
-	if err == nil{
-		t.Errorf("Expected: ERROR, Actual: %s", err, )
+	if err == nil {
+		t.Errorf("Expected: ERROR, Actual: %s", err)
 	}
 }
-
 
 func TestDetermineParams(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		// Set environment variables
+		os.Setenv(pipelineEnvKey, "my-pipeline-name")
+		os.Setenv(configPathKey, "folder/file.yaml")
+		os.Setenv(paramValsKey, `{"param1": "value1", "param2": "value2"}`)
 		os.Setenv(locValsKey, "us-central1")
 		os.Setenv(projectValsKey, "my-project-id")
-		os.Setenv(pipelineEnvKey, "my-pipeline-name")
-		os.Setenv(paramValsKey, `{"param1": "value1", "param2": "value2"}`)
 		os.Setenv(envValsKey, "staging")
-		os.Setenv(configPathKey, "folder/file.yaml")
+		os.Setenv(bucketValsKey, "my-bucket")
+		os.Setenv(projNumberValsKey, "12345")
 
 		// Call determineParams
 		params, err := determineParams()
@@ -86,6 +86,12 @@ func TestDetermineParams(t *testing.T) {
 		if params.configPath != "folder/file.yaml" {
 			t.Errorf("Expected environment to be 'folder/file.yaml', got: %s", params.configPath)
 		}
+		if params.bucket != "my-bucket" {
+			t.Errorf("Expected environment to be 'my-bucket', got: %s", params.bucket)
+		}
+		if params.projectNumber != "12345" {
+			t.Errorf("Expected environment to be '12345', got: %s", params.projectNumber)
+		}
 	})
 
 	t.Run("EmptyConfigPath", func(t *testing.T) {
@@ -112,6 +118,7 @@ func TestDetermineParams(t *testing.T) {
 		if err == nil {
 			t.Errorf("determineParams() should have returned an error, but it didn't")
 		}
+		os.Setenv(configPathKey, "folder/file.yaml")
 	})
 
 	t.Run("EmptyEnvironment", func(t *testing.T) {
@@ -138,6 +145,7 @@ func TestDetermineParams(t *testing.T) {
 		if err == nil {
 			t.Errorf("determineParams() should have returned an error, but it didn't")
 		}
+		os.Setenv(envValsKey, "staging")
 	})
 
 	t.Run("EmptyParams", func(t *testing.T) {
@@ -177,6 +185,7 @@ func TestDetermineParams(t *testing.T) {
 		if err == nil {
 			t.Errorf("determineParams() should have returned an error, but it didn't")
 		}
+		os.Setenv(paramValsKey, `{"param1": "value1", "param2": "value2"}`)
 	})
 
 	t.Run("EmptyPipeline", func(t *testing.T) {
@@ -203,8 +212,8 @@ func TestDetermineParams(t *testing.T) {
 		if err == nil {
 			t.Errorf("determineParams() should have returned an error, but it didn't")
 		}
+		os.Setenv(pipelineEnvKey, "my-pipeline-name")
 	})
-
 
 	t.Run("EmptyProject", func(t *testing.T) {
 		// Set empty project environment variable
@@ -230,6 +239,7 @@ func TestDetermineParams(t *testing.T) {
 		if err == nil {
 			t.Errorf("determineParams() should have returned an error, but it didn't")
 		}
+		os.Setenv(projectValsKey, "my-project-id")
 	})
 
 	t.Run("EmptyLocation", func(t *testing.T) {
@@ -256,5 +266,60 @@ func TestDetermineParams(t *testing.T) {
 		if err == nil {
 			t.Errorf("determineParams() should have returned an error, but it didn't")
 		}
+		os.Setenv(locValsKey, "us-central1")
+	})
+
+	t.Run("EmptyBucket", func(t *testing.T) {
+		// Set empty location environment variable
+		os.Setenv(bucketValsKey, "")
+
+		// Call determineParams
+		_, err := determineParams()
+
+		// Assert error
+		if err == nil {
+			t.Errorf("determineParams() should have returned an error, but it didn't")
+		}
+	})
+
+	t.Run("MissingBucket", func(t *testing.T) {
+		// Remove location environment variable
+		os.Unsetenv(bucketValsKey)
+
+		// Call determineParams
+		_, err := determineParams()
+
+		// Assert error
+		if err == nil {
+			t.Errorf("determineParams() should have returned an error, but it didn't")
+		}
+		os.Setenv(bucketValsKey, "my-bucket")
+	})
+
+	t.Run("EmptyLocation", func(t *testing.T) {
+		// Set empty location environment variable
+		os.Setenv(projNumberValsKey, "")
+
+		// Call determineParams
+		_, err := determineParams()
+
+		// Assert error
+		if err == nil {
+			t.Errorf("determineParams() should have returned an error, but it didn't")
+		}
+	})
+
+	t.Run("MissingLocation", func(t *testing.T) {
+		// Remove location environment variable
+		os.Unsetenv(projNumberValsKey)
+
+		// Call determineParams
+		_, err := determineParams()
+
+		// Assert error
+		if err == nil {
+			t.Errorf("determineParams() should have returned an error, but it didn't")
+		}
+		os.Setenv(projNumberValsKey, "12345")
 	})
 }

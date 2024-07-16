@@ -91,8 +91,11 @@ type params struct {
 	// The label for the target environment, such as staging or production
 	environment string
 
+	// The name of the bucket that holds the render and deployment artifacts
 	bucket string
 
+	// The project number associated to the project where the ML pipeline is being deployed to.
+	// It is passed into the service account.
 	projectNumber string
 }
 

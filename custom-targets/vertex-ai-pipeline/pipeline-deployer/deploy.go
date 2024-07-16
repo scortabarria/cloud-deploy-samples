@@ -16,12 +16,12 @@
 package main
 
 import (
+	"cloud.google.com/go/storage"
 	"context"
 	"fmt"
 	"github.com/GoogleCloudPlatform/cloud-deploy-samples/custom-targets/util/clouddeploy"
 	"google.golang.org/api/aiplatform/v1"
 	"sigs.k8s.io/yaml"
-	"cloud.google.com/go/storage"
 )
 
 const aiDeployerSampleName = "clouddeploy-vertex-ai-sample"
