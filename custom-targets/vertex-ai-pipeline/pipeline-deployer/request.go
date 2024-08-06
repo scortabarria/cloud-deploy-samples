@@ -32,9 +32,6 @@ const (
 	paramValsKey      = "CLOUD_DEPLOY_customTarget_vertexAIPipelineJobParameterValues"
 	locValsKey        = "CLOUD_DEPLOY_customTarget_location"
 	projectValsKey    = "CLOUD_DEPLOY_customTarget_projectID"
-	envValsKey        = "CLOUD_DEPLOY_customTarget_environment"
-	bucketValsKey     = "CLOUD_DEPLOY_customTarget_bucket"
-	projNumberValsKey = "CLOUD_DEPLOY_customTarget_projectNumber"
 )
 
 // requestHandler interface provides methods for handling the Cloud Deploy params.
