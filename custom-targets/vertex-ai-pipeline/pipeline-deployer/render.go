@@ -129,12 +129,6 @@ func (r *renderer) renderCreatePipelineRequest() ([]byte, error) {
 		pipelineJob.DisplayName = paramValues["model_display_name"]
 	}
 
-	if pipelineJob.RuntimeConfig.GcsOutputDirectory == "" {
-		pipelineJob.RuntimeConfig.GcsOutputDirectory = fmt.Sprintf("gs://%s", r.params.bucket)
-	}
-
-	pipelineJob.ServiceAccount = fmt.Sprintf("%s-compute@developer.gserviceaccount.com", r.params.projectNumber)
-
 	paramValues["project_id"] = r.params.project
 	paramString, err := json.Marshal(paramValues)
 	if err != nil {
@@ -142,10 +136,6 @@ func (r *renderer) renderCreatePipelineRequest() ([]byte, error) {
 		return nil, fmt.Errorf("unable to marshal params json")
 	}
 	pipelineJob.RuntimeConfig.ParameterValues = paramString
-
-	labelMap := make(map[string]string)
-	labelMap["environment"] = r.params.environment
-	pipelineJob.Labels = labelMap
 
 	request := &aiplatform.GoogleCloudAiplatformV1CreatePipelineJobRequest{PipelineJob: pipelineJob}
 	return yaml.Marshal(request)

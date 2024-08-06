@@ -15,14 +15,13 @@
 package main
 
 import (
+	"cloud.google.com/go/storage"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/GoogleCloudPlatform/cloud-deploy-samples/custom-targets/util/clouddeploy"
 	"google.golang.org/api/aiplatform/v1"
 	"os"
-	//"strconv"
-	"cloud.google.com/go/storage"
-	"encoding/json"
 )
 
 // Environment variable keys specific to the vertex ai deployer. These are provided via
@@ -87,16 +86,6 @@ type params struct {
 	// Pipeline parameters obtained via deploy parameters. Hold parameters necessary
 	// for the createPipelineJobRequest, such as the prompt dataset
 	pipelineParams map[string]string
-
-	// The label for the target environment, such as staging or production
-	environment string
-
-	// The name of the bucket that holds the render and deployment artifacts
-	bucket string
-
-	// The project number associated to the project where the ML pipeline is being deployed to.
-	// It is passed into the service account.
-	projectNumber string
 }
 
 // determineParams returns the supported params provided in the execution environment via environment variables.
@@ -107,22 +96,6 @@ func determineParams() (*params, error) {
 	}
 	if location == "" {
 		return nil, fmt.Errorf("environment variable %s contains empty string", locValsKey)
-	}
-
-	bucket, found := os.LookupEnv(bucketValsKey)
-	if !found {
-		return nil, fmt.Errorf("environment variable %s not found", bucketValsKey)
-	}
-	if bucket == "" {
-		return nil, fmt.Errorf("environment variable %s contains empty string", bucketValsKey)
-	}
-
-	projectNumber, found := os.LookupEnv(projNumberValsKey)
-	if !found {
-		return nil, fmt.Errorf("environment variable %s not found", projNumberValsKey)
-	}
-	if projectNumber == "" {
-		return nil, fmt.Errorf("environment variable %s contains empty string", projNumberValsKey)
 	}
 
 	project, found := os.LookupEnv(projectValsKey)
@@ -155,14 +128,6 @@ func determineParams() (*params, error) {
 		return nil, fmt.Errorf("environment variable %s contains empty string", paramValsKey)
 	}
 
-	env, found := os.LookupEnv(envValsKey)
-	if !found {
-		return nil, fmt.Errorf("required environment variable %s not found", envValsKey)
-	}
-	if env == "" {
-		return nil, fmt.Errorf("environment variable %s contains empty string", envValsKey)
-	}
-
 	config, found := os.LookupEnv(configPathKey)
 	if !found {
 		return nil, fmt.Errorf("required environment variable %s not found", configPathKey)
@@ -177,8 +142,5 @@ func determineParams() (*params, error) {
 		configPath:     config,
 		location:       location,
 		pipelineParams: pipelineParams,
-		environment:    env,
-		bucket:         bucket,
-		projectNumber:  projectNumber,
 	}, nil
 }

@@ -82,10 +82,6 @@ sed -i "s|\$PROD_PREF_DATA|${PROD_PREF}|g" "$TMPDIR"/clouddeploy.yaml
 sed -i "s|\$PROD_PROMPT_DATA|${PROD_PROMPT}|g" "$TMPDIR"/clouddeploy.yaml
 sed -i "s/\$LARGE_MODEL_REFERENCE/${MODEL_REFERENCE}/g" "$TMPDIR"/clouddeploy.yaml
 sed -i "s|\$MODEL_DISPLAY_NAME|${DISPLAY}|g" "$TMPDIR"/clouddeploy.yaml
-sed -i "s|\$STAGING_BUCKET|${STAGING_BUCKET}|g" "$TMPDIR"/clouddeploy.yaml
-sed -i "s|\$PROD_BUCKET|${PROD_BUCKET}|g" "$TMPDIR"/clouddeploy.yaml
-sed -i "s|\$STAGING_PROJECT_NUMBER|${STAGING_PROJECT_NUMBER}|g" "$TMPDIR"/clouddeploy.yaml
-sed -i "s|\$PROD_PROJECT_NUMBER|${PROD_PROJECT_NUMBER}|g" "$TMPDIR"/clouddeploy.yaml
 
 
 # replace variables in configuration/skaffold.yaml with actual values
@@ -94,8 +90,11 @@ sed -i "s/\$PROJECT_ID/${STAGING_PROJECT}/g" "$TMPDIR"/configuration/skaffold.ya
 sed -i "s/\$_CT_IMAGE_NAME/${_CT_IMAGE_NAME}/g" "$TMPDIR"/configuration/skaffold.yaml
 sed -i "s/\$IMAGE_SHA/${IMAGE_SHA}/g" "$TMPDIR"/configuration/skaffold.yaml
 
-# replace variables in configuration/staging/pipelineJob.yaml
-# sed -i "s/\$BUCKET_NAME/${STAGING_BUCKET}/g" "$TMPDIR"/configuration/staging/pipelineJob.yaml
+# replace variables in configuration/staging/pipelineJob.yaml and configuration/production/pipelineJob.yaml
+sed -i "s|\$STAGING_BUCKET|${STAGING_BUCKET}|g" "$TMPDIR"/configuration/staging/pipelineJob.yaml
+sed -i "s|\$PROD_BUCKET|${PROD_BUCKET}|g" "$TMPDIR"/configuration/production/pipelineJob.yaml
+sed -i "s|\$STAGING_PROJECT_NUMBER|${STAGING_PROJECT_NUMBER}|g" "$TMPDIR"/configuration/staging/pipelineJob.yaml
+sed -i "s|\$PROD_PROJECT_NUMBER|${PROD_PROJECT_NUMBER}|g" "$TMPDIR"/configuration/production/pipelineJob.yaml
 
 
 
