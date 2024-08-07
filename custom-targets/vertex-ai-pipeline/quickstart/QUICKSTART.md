@@ -58,7 +58,7 @@ Enable the Cloud Deploy API, Compute Engine API, Artifact Registry API and Verte
    gcloud services enable clouddeploy.googleapis.com aiplatform.googleapis.com compute.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com --project $PIPELINE_PROJECT_ID
    ```
 
-    ```shell
+   ```shell
    gcloud services enable aiplatform.googleapis.com --project $STAGING_PROJECT_ID
    ```
 
