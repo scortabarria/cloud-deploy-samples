@@ -4,10 +4,18 @@
 
 This quickstart demonstrates how to deploy a ML Pipeline to two target environments using Cloud Deploy custom targets.
 
+## 0. Prior setup
 
-## 1. Clone Repository
+In this quickstart, we will go over how to deploy an ML Pipeline to a staging and then a production environment. This means that you must have three projects: the first to hold your pipeline template (a.k.a. PIPELINE_PROJECT), the second as a staging environment (a.k.a. STAGING_PROJECT), and finally the third as a production environment (a.k.a. PROD_PROJECT). In order for this quickstart to be successfull, you must also have the following things defined:
+1. A pipeline template in PIPELINE_PROJECT. The REPOSITORY_ID, PACKAGE_ID, and TAG/VERSION of this pipeline template will be used later to identify it.
+2. Preference and prompt datasets in your STAGING_PROJECT. These will be used to run your pipeline in its staging environment.
+3. Preference and prompt datasets in your PROD_PROJECT. These will be used to run your pipeline in its production environment.
+
+
+## 1. Clone repository
 
 Clone this repository and navigate to the quickstart directory (`cloud-deploy-samples/custom-targets/vertex-ai-pipeline/quickstart`) since the commands provided expect to be executed from that directory.
+
 
 ## 2. Environment variables
 
@@ -25,7 +33,7 @@ export STAGING_REGION="YOUR_STAGING_REGION"
 export STAGING_PROJECT_NUMBER=$(gcloud projects list \
         --format="value(projectNumber)" \
         --filter="projectId=${STAGING_PROJECT_ID}")
-export STAGING_BUCKET_NAME="YOUR_STAGING_BUCKET_NAME"
+export STAGING_BUCKET_NAME="GIVE_YOUR_STAGING_BUCKET_A_NAME"
 export STAGING_PREF_DATA="YOUR_STAGING_PREFERENCE_DATASET"
 export STAGING_PROMPT_DATA="YOUR_STAGING_PROMPT_DATASET"
 
@@ -34,7 +42,7 @@ export PROD_REGION="YOUR_PROD_REGION"
 export PROD_PROJECT_NUMBER=$(gcloud projects list \
         --format="value(projectNumber)" \
         --filter="projectId=${PROD_PROJECT_ID}")
-export PROD_BUCKET_NAME="YOUR_PROD_BUCKET_NAME"
+export PROD_BUCKET_NAME="GIVE_YOUR_PROD_BUCKET_A_NAME"
 export PROD_PREF_DATA="YOUR_PROD_PREFERENCE_DATASET"
 export PROD_PROMPT_DATA="YOUR_PROD_PROMPT_DATASET"
 
@@ -43,6 +51,38 @@ export PACKAGE_ID="YOUR_PACKAGE"
 export TAG_OR_VERSION="YOUR_TAG_OR_VERSION"
 export LARGE_MODEL_REFERENCE="YOUR_LARGE_MODEL_REFERENCE"
 export MODEL_DISPLAY_NAME="YOUR_DISPLAY_NAME"
+```
+
+```shell
+export PIPELINE_PROJECT_ID="scortabarria-internship"
+export PIPELINE_REGION="us-central1"
+export PIPELINE_PROJECT_NUMBER=$(gcloud projects list \
+        --format="value(projectNumber)" \
+        --filter="projectId=${PIPELINE_PROJECT_ID}")
+
+export STAGING_PROJECT_ID="imara-staging"
+export STAGING_REGION="us-central1"
+export STAGING_PROJECT_NUMBER=$(gcloud projects list \
+        --format="value(projectNumber)" \
+        --filter="projectId=${STAGING_PROJECT_ID}")
+export STAGING_BUCKET_NAME="imara-staging-pipeline-artifacts-scorta"
+export STAGING_PREF_DATA="gs://imara-staging-rlhf-artifacts/data/preference/*.jsonl"
+export STAGING_PROMPT_DATA="gs://imara-staging-rlhf-artifacts/data/prompt/*.jsonl"
+
+export PROD_PROJECT_ID="imara-prod"
+export PROD_REGION="us-central1"
+export PROD_PROJECT_NUMBER=$(gcloud projects list \
+        --format="value(projectNumber)" \
+        --filter="projectId=${PROD_PROJECT_ID}")
+export PROD_BUCKET_NAME="imara-prod-pipeline-artifacts-scorta"
+export PROD_PREF_DATA="gs://imara-prod-rlhf-artifacts/data/preference/*.jsonl"
+export PROD_PROMPT_DATA="gs://imara-prod-rlhf-artifacts/data/prompt/*.jsonl"
+
+export REPO_ID="scortabarria-internship-rlhf-pipelines"
+export PACKAGE_ID="rlhf-tune-pipeline"
+export TAG_OR_VERSION="sha256:e739c5c310d406f8a6a9133b0c97bf9a249715da0a507505997ced042e3e0f17"
+export LARGE_MODEL_REFERENCE="text-bison@001"
+export MODEL_DISPLAY_NAME="$PIPELINE_REGION/$PIPELINE_PROJECT_ID"
 ```
 
 
@@ -67,8 +107,7 @@ Enable the Cloud Deploy API, Compute Engine API, Artifact Registry API and Verte
    ```
 
 
-
-## 4. Create a bucket
+## 4. Create a Bucket
 
 From the `quickstart` directory, run these commands to create a bucket in Cloud Storage for each of your targets:
 
