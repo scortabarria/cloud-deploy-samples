@@ -53,38 +53,6 @@ export LARGE_MODEL_REFERENCE="YOUR_LARGE_MODEL_REFERENCE"
 export MODEL_DISPLAY_NAME="YOUR_DISPLAY_NAME"
 ```
 
-```shell
-export PIPELINE_PROJECT_ID="scortabarria-internship"
-export PIPELINE_REGION="us-central1"
-export PIPELINE_PROJECT_NUMBER=$(gcloud projects list \
-        --format="value(projectNumber)" \
-        --filter="projectId=${PIPELINE_PROJECT_ID}")
-
-export STAGING_PROJECT_ID="imara-staging"
-export STAGING_REGION="us-central1"
-export STAGING_PROJECT_NUMBER=$(gcloud projects list \
-        --format="value(projectNumber)" \
-        --filter="projectId=${STAGING_PROJECT_ID}")
-export STAGING_BUCKET_NAME="imara-staging-pipeline-artifacts-scorta"
-export STAGING_PREF_DATA="gs://imara-staging-rlhf-artifacts/data/preference/*.jsonl"
-export STAGING_PROMPT_DATA="gs://imara-staging-rlhf-artifacts/data/prompt/*.jsonl"
-
-export PROD_PROJECT_ID="imara-prod"
-export PROD_REGION="us-central1"
-export PROD_PROJECT_NUMBER=$(gcloud projects list \
-        --format="value(projectNumber)" \
-        --filter="projectId=${PROD_PROJECT_ID}")
-export PROD_BUCKET_NAME="imara-prod-pipeline-artifacts-scorta"
-export PROD_PREF_DATA="gs://imara-prod-rlhf-artifacts/data/preference/*.jsonl"
-export PROD_PROMPT_DATA="gs://imara-prod-rlhf-artifacts/data/prompt/*.jsonl"
-
-export REPO_ID="scortabarria-internship-rlhf-pipelines"
-export PACKAGE_ID="rlhf-tune-pipeline"
-export TAG_OR_VERSION="sha256:e739c5c310d406f8a6a9133b0c97bf9a249715da0a507505997ced042e3e0f17"
-export LARGE_MODEL_REFERENCE="text-bison@001"
-export MODEL_DISPLAY_NAME="$PIPELINE_REGION/$PIPELINE_PROJECT_ID"
-```
-
 
 ## 3. Prerequisites
 
