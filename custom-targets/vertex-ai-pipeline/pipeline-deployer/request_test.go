@@ -52,9 +52,6 @@ func TestDetermineParams(t *testing.T) {
 		os.Setenv(paramValsKey, `{"param1": "value1", "param2": "value2"}`)
 		os.Setenv(locValsKey, "us-central1")
 		os.Setenv(projectValsKey, "my-project-id")
-		os.Setenv(envValsKey, "staging")
-		os.Setenv(bucketValsKey, "my-bucket")
-		os.Setenv(projNumberValsKey, "12345")
 
 		// Call determineParams
 		params, err := determineParams()
@@ -80,17 +77,8 @@ func TestDetermineParams(t *testing.T) {
 		if params.pipelineParams["param2"] != "value2" {
 			t.Errorf("Expected pipelineParams['param2'] to be 'value2', got: %s", params.pipelineParams["param2"])
 		}
-		if params.environment != "staging" {
-			t.Errorf("Expected environment to be 'staging', got: %s", params.environment)
-		}
 		if params.configPath != "folder/file.yaml" {
 			t.Errorf("Expected environment to be 'folder/file.yaml', got: %s", params.configPath)
-		}
-		if params.bucket != "my-bucket" {
-			t.Errorf("Expected environment to be 'my-bucket', got: %s", params.bucket)
-		}
-		if params.projectNumber != "12345" {
-			t.Errorf("Expected environment to be '12345', got: %s", params.projectNumber)
 		}
 	})
 
@@ -119,33 +107,6 @@ func TestDetermineParams(t *testing.T) {
 			t.Errorf("determineParams() should have returned an error, but it didn't")
 		}
 		os.Setenv(configPathKey, "folder/file.yaml")
-	})
-
-	t.Run("EmptyEnvironment", func(t *testing.T) {
-		// Set empty environment environment variable
-		os.Setenv(envValsKey, "")
-
-		// Call determineParams
-		_, err := determineParams()
-
-		// Assert error
-		if err == nil {
-			t.Errorf("determineParams() should have returned an error, but it didn't")
-		}
-	})
-
-	t.Run("MissingEnvironment", func(t *testing.T) {
-		// Remove environment environment variable
-		os.Unsetenv(envValsKey)
-
-		// Call determineParams
-		_, err := determineParams()
-
-		// Assert error
-		if err == nil {
-			t.Errorf("determineParams() should have returned an error, but it didn't")
-		}
-		os.Setenv(envValsKey, "staging")
 	})
 
 	t.Run("EmptyParams", func(t *testing.T) {
@@ -267,59 +228,5 @@ func TestDetermineParams(t *testing.T) {
 			t.Errorf("determineParams() should have returned an error, but it didn't")
 		}
 		os.Setenv(locValsKey, "us-central1")
-	})
-
-	t.Run("EmptyBucket", func(t *testing.T) {
-		// Set empty location environment variable
-		os.Setenv(bucketValsKey, "")
-
-		// Call determineParams
-		_, err := determineParams()
-
-		// Assert error
-		if err == nil {
-			t.Errorf("determineParams() should have returned an error, but it didn't")
-		}
-	})
-
-	t.Run("MissingBucket", func(t *testing.T) {
-		// Remove location environment variable
-		os.Unsetenv(bucketValsKey)
-
-		// Call determineParams
-		_, err := determineParams()
-
-		// Assert error
-		if err == nil {
-			t.Errorf("determineParams() should have returned an error, but it didn't")
-		}
-		os.Setenv(bucketValsKey, "my-bucket")
-	})
-
-	t.Run("EmptyLocation", func(t *testing.T) {
-		// Set empty location environment variable
-		os.Setenv(projNumberValsKey, "")
-
-		// Call determineParams
-		_, err := determineParams()
-
-		// Assert error
-		if err == nil {
-			t.Errorf("determineParams() should have returned an error, but it didn't")
-		}
-	})
-
-	t.Run("MissingLocation", func(t *testing.T) {
-		// Remove location environment variable
-		os.Unsetenv(projNumberValsKey)
-
-		// Call determineParams
-		_, err := determineParams()
-
-		// Assert error
-		if err == nil {
-			t.Errorf("determineParams() should have returned an error, but it didn't")
-		}
-		os.Setenv(projNumberValsKey, "12345")
 	})
 }

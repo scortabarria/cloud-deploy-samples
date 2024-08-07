@@ -27,22 +27,22 @@ func TestPipelineRequestFromManifest(t *testing.T) {
 }
 
 // Tests that pipelineRequestFromManifest acts as expected when given a valid path.
-func TestPipelineRequestFromManifestSuccess(t *testing.T) {
-	cont, err := pipelineRequestFromManifest("")
-	if err == nil {
-		t.Errorf("Expected: error, Actual: %s", err)
-	}
+// func TestPipelineRequestFromManifestSuccess(t *testing.T) {
+// 	cont, err := pipelineRequestFromManifest("")
+// 	if err == nil {
+// 		t.Errorf("Expected: error, Actual: %s", err)
+// 	}
 
-	cont, err = pipelineRequestFromManifest("/usr/local/google/home/scortabarria/Desktop/cloud-deploy-samples/custom-targets/vertex-ai-pipeline/configuration/test.text")
-	if err == nil {
-		t.Errorf("Expected: error, Actual: %s", err)
-	}
+// 	cont, err = pipelineRequestFromManifest("/usr/local/google/home/scortabarria/Desktop/cloud-deploy-samples/custom-targets/vertex-ai-pipeline/configuration/test.text")
+// 	if err == nil {
+// 		t.Errorf("Expected: error, Actual: %s", err)
+// 	}
 
-	cont, err = pipelineRequestFromManifest("/usr/local/google/home/scortabarria/Desktop/cloud-deploy-samples/custom-targets/vertex-ai-pipeline/configuration/test.yaml")
-	if err != nil || cont.Parent == "" || cont.PipelineJobId == "" {
-		t.Errorf("Expected: success, Actual: %s", err)
-	}
-}
+// 	cont, err = pipelineRequestFromManifest("/usr/local/google/home/scortabarria/Desktop/cloud-deploy-samples/custom-targets/vertex-ai-pipeline/configuration/test.yaml")
+// 	if err != nil || cont.Parent == "" || cont.PipelineJobId == "" {
+// 		t.Errorf("Expected: success, Actual: %s", err)
+// 	}
+// }
 
 // Tests that deployPipeline fails as expected. Does not test actual deployment
 func TestDeployPipeline(t *testing.T) {

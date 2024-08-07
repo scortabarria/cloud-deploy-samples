@@ -2,7 +2,7 @@
 
 export _CT_IMAGE_NAME=vertexai
 
-while getopts "s:r:p:o:t:b:c:f:m:y:z:l:d:e:g:" arg; do
+while getopts "s:r:p:o:t:b:c:f:m:y:z:l:d:e:g:h:i:j:" arg; do
   case "${arg}" in
     s)
       STAGING_PROJECT="${OPTARG}"
@@ -49,6 +49,15 @@ while getopts "s:r:p:o:t:b:c:f:m:y:z:l:d:e:g:" arg; do
     g)
       PROD_PROJECT_NUMBER="${OPTARG}"
       ;;
+    h)
+      PIPELINE_PROJECT_NUMBER="${OPTARG}"
+      ;;
+    i)
+      PIPELINE_PROJECT="${OPTARG}"
+      ;;
+    j)
+      PIPELINE_REGION="${OPTARG}"
+      ;;
     *)
       usage
       exit 1
@@ -56,20 +65,22 @@ while getopts "s:r:p:o:t:b:c:f:m:y:z:l:d:e:g:" arg; do
   esac
 done
 
-if [[ ! -v STAGING_PROJECT || ! -v STAGING_REGION || ! -v PROD_PROJECT || ! -v PROD_REGION || ! -v TMPDIR || ! -v STAGING_BUCKET || ! -v PROD_BUCKET || ! -v STAGING_PREF || ! -v STAGING_PROMPT || ! -v PROD_PREF || ! -v PROD_PROMPT || ! -v MODEL_REFERENCE|| ! -v DISPLAY ]]; then
+if [[ ! -v STAGING_PROJECT || ! -v STAGING_REGION || ! -v STAGING_PROJECT_NUMBER || ! -v PROD_PROJECT || ! -v PROD_REGION || ! -v PROD_PROJECT_NUMBER || ! -v TMPDIR || ! -v STAGING_BUCKET || ! -v PROD_BUCKET || ! -v STAGING_PREF || ! -v STAGING_PROMPT || ! -v PROD_PREF || ! -v PROD_PROMPT || ! -v MODEL_REFERENCE || ! -v DISPLAY || ! -v STAGING_PROJECT_NUMBER || ! -v PROD_PROJECT_NUMBER || ! -v PIPELINE_PROJECT_NUMBER || ! -v PIPELINE_PROJECT || ! -v PIPELINE_REGION ]]; then
   usage
   exit 1
 fi
 
 # get the location where the custom image was uploaded
-AR_REPO=us-central1-docker.pkg.dev/scortabarria-internship/cd-custom-targets
+AR_REPO=${PIPELINE_REGION}-docker.pkg.dev/${PIPELINE_PROJECT}/cd-custom-targets
 
 # get the image digest of the most recently built image
 IMAGE_SHA=$(gcloud -q artifacts docker images describe "${AR_REPO}/${_CT_IMAGE_NAME}:latest" --format 'get(image_summary.digest)')
 
 
 cp clouddeploy.yaml "$TMPDIR"/clouddeploy.yaml
+cp give_permissions.sh "$TMPDIR"/give_permissions.sh
 cp -r configuration "$TMPDIR"/configuration
+
 
 # replace variables in clouddeploy.yaml with actual values
 sed -i "s/\$STAGING_PROJECT_ID/${STAGING_PROJECT}/g" "$TMPDIR"/clouddeploy.yaml
@@ -84,7 +95,7 @@ sed -i "s/\$LARGE_MODEL_REFERENCE/${MODEL_REFERENCE}/g" "$TMPDIR"/clouddeploy.ya
 sed -i "s|\$MODEL_DISPLAY_NAME|${DISPLAY}|g" "$TMPDIR"/clouddeploy.yaml
 
 
-# replace variables in configuration/skaffold.yaml with actual values
+# # replace variables in configuration/skaffold.yaml with actual values
 sed -i "s/\$STAGING_REGION/${STAGING_REGION}/g" "$TMPDIR"/configuration/skaffold.yaml
 sed -i "s/\$PROJECT_ID/${STAGING_PROJECT}/g" "$TMPDIR"/configuration/skaffold.yaml
 sed -i "s/\$_CT_IMAGE_NAME/${_CT_IMAGE_NAME}/g" "$TMPDIR"/configuration/skaffold.yaml
@@ -96,6 +107,16 @@ sed -i "s|\$PROD_BUCKET|${PROD_BUCKET}|g" "$TMPDIR"/configuration/production/pip
 sed -i "s|\$STAGING_PROJECT_NUMBER|${STAGING_PROJECT_NUMBER}|g" "$TMPDIR"/configuration/staging/pipelineJob.yaml
 sed -i "s|\$PROD_PROJECT_NUMBER|${PROD_PROJECT_NUMBER}|g" "$TMPDIR"/configuration/production/pipelineJob.yaml
 
+# replace variables in configuration/staging/pipelineJob.yaml and configuration/production/pipelineJob.yaml
+sed -i "s|\$STAGING_BUCKET|${STAGING_BUCKET}|g" "$TMPDIR"/configuration/staging/pipelineJob.yaml
+sed -i "s|\$PROD_BUCKET|${PROD_BUCKET}|g" "$TMPDIR"/configuration/production/pipelineJob.yaml
+sed -i "s|\$STAGING_PROJECT_NUMBER|${STAGING_PROJECT_NUMBER}|g" "$TMPDIR"/configuration/staging/pipelineJob.yaml
+sed -i "s|\$PROD_PROJECT_NUMBER|${PROD_PROJECT_NUMBER}|g" "$TMPDIR"/configuration/production/pipelineJob.yaml
 
-
-
+# replace variables in give_permissions.sh with actual values
+sed -i "s|\$PIPELINE_PROJECT_ID|${PIPELINE_PROJECT}|g" "$TMPDIR"/give_permissions.sh
+sed -i "s|\$PIPELINE_PROJECT_NUMBER|${PIPELINE_PROJECT_NUMBER}|g" "$TMPDIR"/give_permissions.sh
+sed -i "s|\$STAGING_PROJECT_ID|${STAGING_PROJECT}|g" "$TMPDIR"/give_permissions.sh
+sed -i "s|\$STAGING_PROJECT_NUMBER|${STAGING_PROJECT_NUMBER}|g" "$TMPDIR"/give_permissions.sh
+sed -i "s|\$PROD_PROJECT_ID|${PROD_PROJECT}|g" "$TMPDIR"/give_permissions.sh
+sed -i "s|\$PROD_PROJECT_NUMBER|${PROD_PROJECT_NUMBER}|g" "$TMPDIR"/give_permissions.sh

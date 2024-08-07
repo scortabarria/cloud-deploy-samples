@@ -2,7 +2,7 @@
 
 ## Overview
 
-This quickstart demonstrates how to deploy a ML Pipeline to an target environment using a Cloud Deploy custom target.
+This quickstart demonstrates how to deploy a ML Pipeline to two target environments using Cloud Deploy custom targets.
 
 
 ## 1. Clone Repository
@@ -45,161 +45,35 @@ export LARGE_MODEL_REFERENCE="YOUR_LARGE_MODEL_REFERENCE"
 export MODEL_DISPLAY_NAME="YOUR_DISPLAY_NAME"
 ```
 
-```shell
-export PIPELINE_PROJECT_ID="scortabarria-internship"
-export PIPELINE_REGION="us-central1"
-export PIPELINE_PROJECT_NUMBER=$(gcloud projects list \
-        --format="value(projectNumber)" \
-        --filter="projectId=${PIPELINE_PROJECT_ID}")
 
-export STAGING_PROJECT_ID="imara-staging"
-export STAGING_REGION="us-central1"
-export STAGING_PROJECT_NUMBER=$(gcloud projects list \
-        --format="value(projectNumber)" \
-        --filter="projectId=${STAGING_PROJECT_ID}")
-export STAGING_BUCKET_NAME="imara-staging-pipeline-artifacts-scorta"
-export STAGING_PREF_DATA="gs://imara-staging-rlhf-artifacts/data/preference/*.jsonl"
-export STAGING_PROMPT_DATA="gs://imara-staging-rlhf-artifacts/data/prompt/*.jsonl"
-
-export PROD_PROJECT_ID="imara-prod"
-export PROD_REGION="us-central1"
-export PROD_PROJECT_NUMBER=$(gcloud projects list \
-        --format="value(projectNumber)" \
-        --filter="projectId=${PROD_PROJECT_ID}")
-export PROD_BUCKET_NAME="imara-prod-pipeline-artifacts-scorta"
-export PROD_PREF_DATA="gs://imara-prod-rlhf-artifacts/data/preference/*.jsonl"
-export PROD_PROMPT_DATA="gs://imara-prod-rlhf-artifacts/data/prompt/*.jsonl"
-
-export REPO_ID="scortabarria-internship-rlhf-pipelines"
-export PACKAGE_ID="rlhf-tune-pipeline"
-export TAG_OR_VERSION="sha256:e739c5c310d406f8a6a9133b0c97bf9a249715da0a507505997ced042e3e0f17"
-export LARGE_MODEL_REFERENCE="text-bison@001"
-export MODEL_DISPLAY_NAME="$PIPELINE_REGION/$PIPELINE_PROJECT_ID"
-
-```
 ## 3. Prerequisites
 
 [Install](https://cloud.google.com/sdk/docs/install) the latest version of the Google Cloud CLI
 
 
 ### APIs
-Enable the Cloud Deploy API, Compute Engine API, and Vertex AI API.
+Enable the Cloud Deploy API, Compute Engine API, Artifact Registry API and Vertex AI API for the project where your pipeline template is located. For each target, enable the Vertex AI API.
 
    ```shell
-   gcloud services enable clouddeploy.googleapis.com aiplatform.googleapis.com compute.googleapis.com --project $PIPELINE_PROJECT_ID
+   gcloud services enable clouddeploy.googleapis.com aiplatform.googleapis.com compute.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com --project $PIPELINE_PROJECT_ID
    ```
 
     ```shell
-   gcloud services enable clouddeploy.googleapis.com aiplatform.googleapis.com compute.googleapis.com --project $STAGING_PROJECT_ID
+   gcloud services enable aiplatform.googleapis.com --project $STAGING_PROJECT_ID
    ```
 
    ```shell
-   gcloud services enable clouddeploy.googleapis.com aiplatform.googleapis.com compute.googleapis.com --project $PROD_PROJECT_ID
+   gcloud services enable aiplatform.googleapis.com --project $PROD_PROJECT_ID
    ```
 
-### Permissions
-The default service account, `{project_num}-compute@developer.gserviceaccount.com`, used by Cloud Deploy needs the
-   following roles:
-
-1. `roles/clouddeploy.jobRunner` - required by Cloud Deploy
-
-   ```shell
-   gcloud projects add-iam-policy-binding $PIPELINE_PROJECT_ID \
-       --member=serviceAccount:$(gcloud projects describe $PIPELINE_PROJECT_ID \
-       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
-       --role="roles/clouddeploy.jobRunner"
-   ```
-2. `roles/clouddeploy.viewer` - required to access Cloud Deploy resources
-
-   ```shell
-   gcloud projects add-iam-policy-binding $PIPELINE_PROJECT_ID \
-       --member=serviceAccount:$(gcloud projects describe $PIPELINE_PROJECT_ID \
-       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
-       --role="roles/clouddeploy.viewer"
-   ```
-3. `roles/aiplatform.user` - required to access the models and deploy endpoints in the custom target
-
-   ```shell
-   gcloud projects add-iam-policy-binding $PIPELINE_PROJECT_ID \
-       --member=serviceAccount:$(gcloud projects describe $PIPELINE_PROJECT_ID \
-       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
-       --role="roles/aiplatform.user"
-
-   ```
-
-
-   ```shell
-   
-
-   gcloud projects add-iam-policy-binding $PROD_PROJECT_ID \
-       --member=serviceAccount:$(gcloud projects describe $PROD_PROJECT_ID \
-       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
-       --role="roles/aiplatform.user"
-
-    gcloud iam service-accounts add-iam-policy-binding \
-        ${PROJECT_NUMBER}-compute@developer.gserviceaccount.com \
-        --member=serviceAccount:${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com \
-        --role=roles/iam.serviceAccountUser \
-        --project=${STAGING_PROJECT_ID}
-
-    gcloud projects add-iam-policy-binding $STAGING_PROJECT_ID \
-       --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
-       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
-       --role="roles/clouddeploy.jobRunner"
-
-    gcloud projects add-iam-policy-binding $STAGING_PROJECT_ID \
-       --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
-       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
-       --role="roles/clouddeploy.viewer"
-
-    gcloud projects add-iam-policy-binding $STAGING_PROJECT_ID \
-       --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
-       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
-       --role="roles/aiplatform.user"
-
-    gcloud projects add-iam-policy-binding $STAGING_PROJECT_ID \
-       --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
-       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
-       --role="roles/artifactregistry.writer"
-
-
-
-    gcloud iam service-accounts add-iam-policy-binding \
-        ${PROJECT_NUMBER}-compute@developer.gserviceaccount.com \
-        --member=serviceAccount:${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com \
-        --role=roles/iam.serviceAccountUser \
-        --project=${PIPELINE_PROJECT_ID}
-
-    gcloud projects add-iam-policy-binding $PIPELINE_PROJECT_ID \
-       --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
-       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
-       --role="roles/clouddeploy.jobRunner"
-
-    gcloud projects add-iam-policy-binding $PIPELINE_PROJECT_ID \
-       --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
-       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
-       --role="roles/clouddeploy.viewer"
-
-    gcloud projects add-iam-policy-binding $PIPELINE_PROJECT_ID \
-       --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
-       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
-       --role="roles/aiplatform.user"
-
-     gcloud projects add-iam-policy-binding $PIPELINE_PROJECT_ID \
-       --member=serviceAccount:$(gcloud projects describe $STAGING_PROJECT_ID \
-       --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
-       --role="roles/artifactregistry.writer"
-   ```
 
 
 ## 4. Create a bucket
 
-From the `quickstart` directory, run this command to create a bucket in Cloud Storage:
+From the `quickstart` directory, run these commands to create a bucket in Cloud Storage for each of your targets:
 
 ```shell
-# gsutil mb -l $PIPELINE_REGION -p $PIPELINE_PROJECT_ID gs://$PIPELINE_BUCKET_NAME
-
-gsutil mb -l $STAGING_REGION -p $STAGING_PROJECT_ID gs://$STAGING_BUCKET_NAME
+gsutil mb -l $STAGING_REGION -p $STAGING_PROJECT_ID gs://$STAGING_BUCKET_NAME 
 
 gsutil mb -l $PROD_REGION -p $PROD_PROJECT_ID gs://$PROD_BUCKET_NAME
 
@@ -215,7 +89,6 @@ install the custom target resources:
 ../build_and_register.sh -p $PIPELINE_PROJECT_ID -r $PIPELINE_REGION
 ```
 
-
 For information about the `build_and_register.sh` script, see the [README](../README.md#build)
 
 
@@ -226,19 +99,25 @@ Within the `quickstart` directory, run this second command to make a temporary c
 
 ```shell
 export TMPDIR=$(mktemp -d)
-./replace_variables.sh -s $STAGING_PROJECT_ID -r $STAGING_REGION -p $PROD_PROJECT_ID -o $PROD_REGION -t $TMPDIR -b $STAGING_BUCKET_NAME -c $PROD_BUCKET_NAME -f $STAGING_PREF_DATA -m $STAGING_PROMPT_DATA -l $LARGE_MODEL_REFERENCE -d $MODEL_DISPLAY_NAME -y $PROD_PREF_DATA -z $PROD_PROMPT_DATA -e $STAGING_PROJECT_NUMBER -g $PROD_PROJECT_NUMBER
+./replace_variables.sh -s $STAGING_PROJECT_ID -r $STAGING_REGION -p $PROD_PROJECT_ID -o $PROD_REGION -t $TMPDIR -b $STAGING_BUCKET_NAME -c $PROD_BUCKET_NAME -f $STAGING_PREF_DATA -m $STAGING_PROMPT_DATA -l $LARGE_MODEL_REFERENCE -d $MODEL_DISPLAY_NAME -y $PROD_PREF_DATA -z $PROD_PROMPT_DATA -e $STAGING_PROJECT_NUMBER -g $PROD_PROJECT_NUMBER -h $PIPELINE_PROJECT_NUMBER -i $PIPELINE_PROJECT_ID -j $PIPELINE_REGION
 ```
-
-<!-- ```shell
-export TMPDIR=$(mktemp -d)
-./replace_variables.sh -a $PIPELINE_PROJECT_ID -c $PIPELINE_REGION -s $STAGING_PROJECT_ID -r $STAGING_REGION -p $PROD_PROJECT_ID -o $PROD_REGION -t $TMPDIR -b $PIPELINE_BUCKET_NAME -f $STAGING_PREF_DATA -m $STAGING_PROMPT_DATA -l $LARGE_MODEL_REFERENCE -d $MODEL_DISPLAY_NAME
-``` -->
 
 The command does the following:
 1. Creates temporary directory $TMPDIR and copies `clouddeploy.yaml` and `configuration` into it.
-2. Replaces the placeholders in `$TMPDIR/clouddeploy.yaml`, `configuration/skaffold.yaml`, and `configuration/staging/pipelineJob.yaml`
+2. Replaces the placeholders in `$TMPDIR/clouddeploy.yaml`, `configuration/skaffold.yaml`, `give_permissions.sh` and `configuration/staging/pipelineJob.yaml`
 3. Obtains the URL of the latest version of the custom image, built in step 6, and sets it in `$TMPDIR/configuration/skaffold.yaml`
 
+
+### Permissions
+The default service account, `{project_num}-compute@developer.gserviceaccount.com`, used by Cloud Deploy needs 
+   a few permissions. Run this command to give the necessary permissions to your service accounts:
+
+```shell
+./give_permissions.sh
+```
+
+
+### Create a delivery pipeline
 Lastly, apply the Cloud Deploy configuration defined in `clouddeploy.yaml`:
 
 ```shell
@@ -259,9 +138,7 @@ gcloud deploy releases create release-001 \
     --source=$TMPDIR/configuration \
     --deploy-parameters="customTarget/vertexAIPipeline=https://$PIPELINE_REGION-kfp.pkg.dev/$PIPELINE_PROJECT_ID/$REPO_ID/$PACKAGE_ID/$TAG_OR_VERSION"
 ```
-```shell
-gcloud deploy delete --file=$TMPDIR/clouddeploy.yaml --force --project=$PIPELINE_PROJECT_ID --region=$PIPELINE_REGION
-```
+
 
 ### Explanation of command line flags
 
@@ -269,8 +146,8 @@ The `--source` command line flag instructs gcloud where to look for the configur
 
 The `--deploy-parameters` flag is used to provide the custom deployer with additional parameters needed to perform the deployment.
 
-Here, we are providing the custom deployer with deploy parameter `customTarget/vertexAIModel`
-which specifies the full resource name of the model to deploy
+Here, we are providing the custom deployer with deploy parameter `customTarget/vertexAIPipeline`
+which specifies the full resource name of the pipeline to deploy
 
 The remaining flags specify the Cloud Deploy Delivery Pipeline. `--delivery-pipeline` is the name of
 the delivery pipeline where the release will be created, and the project and region of the pipeline
@@ -351,8 +228,4 @@ To delete Cloud Deploy resources:
 
 ```shell
 gcloud deploy delete --file=$TMPDIR/clouddeploy.yaml --force --project=$PIPELINE_PROJECT_ID --region=$PIPELINE_REGION
-```
-
-```shell
-gcloud deploy delete --file=$TMPDIR/clouddeploy.yaml --force --project=$PROD_PROJECT_ID --region=$PROD_REGION
 ```
