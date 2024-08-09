@@ -110,14 +110,13 @@ export TMPDIR=$(mktemp -d)
 ```
 
 The command does the following:
-1. Creates temporary directory $TMPDIR and copies `clouddeploy.yaml` and `configuration` into it.
-2. Replaces the placeholders in `$TMPDIR/clouddeploy.yaml`, `configuration/skaffold.yaml`, `give_permissions.sh` and `configuration/staging/pipelineJob.yaml`
+1. Creates temporary directory $TMPDIR and copies `clouddeploy.yaml`, `give_permissions.sh`, and `configuration` into it.
+2. Replaces the placeholders in `$TMPDIR/clouddeploy.yaml`, `configuration/skaffold.yaml`, `give_permissions.sh`, `configuration/staging/pipelineJob.yaml`, and `configuration/production/pipelineJob.yaml`
 3. Obtains the URL of the latest version of the custom image, built in step 6, and sets it in `$TMPDIR/configuration/skaffold.yaml`
 
 
 ### Permissions
-The default service account, `{project_num}-compute@developer.gserviceaccount.com`, used by Cloud Deploy needs 
-   a few permissions. Run this command to give the necessary permissions to your service accounts:
+The default service account, `{project_num}-compute@developer.gserviceaccount.com`, used by Cloud Deploy needs a few permissions. Run this command to give the necessary permissions to your service accounts:
 
 ```shell
 ./give_permissions.sh
@@ -135,7 +134,7 @@ gcloud deploy apply --file=$TMPDIR/clouddeploy.yaml --project=$PIPELINE_PROJECT_
 ## 7. Create a release and rollout
 
 Create a Cloud Deploy release for the configuration defined in the `configuration` directory. This automatically
-creates a rollout that deploys the first model version to the target.
+creates a rollout that deploys the pipeline to the staging environment.
 
 ```shell
 gcloud deploy releases create release-001 \
@@ -190,7 +189,7 @@ gcloud deploy rollouts describe release-001-to-staging-environment-0001 --releas
  
 ## 9. Promote a release
 
-This promotes the release, automatically moving it to the next target environment.
+This promotes the release, automatically moving it to the production environment.
 
 ```shell
 gcloud deploy releases promote \
@@ -200,6 +199,8 @@ gcloud deploy releases promote \
     --project=$PIPELINE_PROJECT_ID \
     --region=$PIPELINE_REGION
 ```
+
+You will be asked to confirm whether you would like to complete this promotion. Entering `y` or `Y` will finish the action, deploying the pipeline to the production environment. 
 
 
 ### Monitor the release's progress
@@ -231,7 +232,7 @@ gcloud deploy rollouts describe release-001-to-staging-environment-0001 --releas
 
 ## 11. Clean up
 
-To delete Cloud Deploy resources:
+You have now completed the quickstart, deploying an ML Pipeline to two target environments. To delete the Cloud Deploy resources:
 
 ```shell
 gcloud deploy delete --file=$TMPDIR/clouddeploy.yaml --force --project=$PIPELINE_PROJECT_ID --region=$PIPELINE_REGION
